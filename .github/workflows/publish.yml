@@ -72,8 +72,8 @@ jobs:
         run: |
           # The Ed25519 signing key lives as a repo secret and is materialized to the gitignored
           # path publish.ts expects. It is the SAME key the predecessor registry used — key
-          # continuity is what makes this registry's `movedFrom` claim (and the old repo's
-          # forwarding tombstone) trustworthy without asking every user to confirm the move.
+          # continuity is what makes this registry's `movedFrom` claim trustworthy without asking
+          # every user to confirm the move.
           # Fail closed: without it, publish.ts would happily regenerate the index *unsigned*,
           # silently stripping every signature and the registry's publicKey — a trust downgrade no
           # one would notice until a client stopped verifying.

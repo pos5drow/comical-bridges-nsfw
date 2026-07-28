@@ -3,13 +3,13 @@
  * (`index.json` + `bridges/**`).
  *
  * `--moved-from` names the retired URL these bridges were served from, so a client re-adding this
- * registry by hand adopts its existing installs instead of stranding them; the sibling repo leaves a
- * signed tombstone at that URL (`--tombstone --moved-to`) so clients still holding it are forwarded
- * automatically. See "Moving a registry" in the comical README.
+ * registry by hand adopts its existing installs instead of stranding them. That URL is gone now — no
+ * forwarding tombstone is served there anymore — so adoption is the only path back from it. See
+ * "Moving a registry" in the comical README.
  *
- * **The signing key must match the one on the tombstone.** Key continuity is the only proof the same
- * operator is behind both URLs, and it's what lets the move be followed (and the predecessor adopted)
- * without asking the user to confirm anything.
+ * **The signing key must stay the one the predecessor URL used.** Key continuity is the only proof
+ * the same operator is behind both URLs, and it's what lets the predecessor be adopted without
+ * asking the user to confirm anything.
  *
  * Uses the local comical CLI (../comical) for now — once `comical` ships to npm this becomes
  * `bunx comical …`.
