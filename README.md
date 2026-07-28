@@ -66,8 +66,14 @@ bun run audit       # live conformance run against the real backends (add --writ
 ```
 
 Publishing is CI's job (`.github/workflows/publish.yml`, on any push touching `src/`) — it holds the
-signing key as a repo secret and refuses to publish unsigned. To regenerate locally you need that key
-at `registry.key.json` (gitignored):
+signing key as a repo secret and refuses to publish unsigned. **Don't commit a locally built
+registry.** Bun stamps each module's path into the bundle as a comment, so the bytes (and therefore
+the SHA-256 clients verify) depend on where the repo sits on disk — a local publish and CI's publish
+of identical sources disagree, and the next CI run refuses to overwrite its own bundles. Let CI do
+it; the runner's Bun version is pinned so its output only moves when someone means it to.
+
+Regenerating locally is still fine for *inspecting* the output — you need the key at
+`registry.key.json` (gitignored) — just don't commit the result:
 
 ```sh
 COMICAL_KEY=registry.key.json bun run publish:registry
