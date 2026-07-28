@@ -20,18 +20,6 @@ Set it as `EXPO_PUBLIC_COMICAL_REGISTRY` in the app's gitignored `apps/mobile/.e
 pre-adds a single registry). For the desktop CLI:
 `comical registry add https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/index.json`.
 
-### Moved from `comical-bridges/nsfw`
-
-These bridges used to be published as the `nsfw/` subtree of `comical-bridges`. Nothing to do:
-
-- that old URL now serves a **signed forwarding tombstone**, so a client already holding it follows
-  the move on its next refresh and keeps its installs;
-- this registry asserts the old URL as its `movedFrom`, so adding it by hand adopts those installs
-  instead of stranding them.
-
-Both halves are signed with the same key as before — that key continuity is the entire proof that
-the same operator is behind both URLs, and it's why the migration needs no confirmation from you.
-
 ## Status
 
 Live conformance + cover-size metrics, refreshed nightly by [`audit.ts`](audit.ts) (the shared

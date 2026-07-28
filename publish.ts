@@ -2,13 +2,12 @@
  * Publish this repo as a single Comical registry, served from the repo root via raw.githubusercontent
  * (`index.json` + `bridges/**`).
  *
- * These bridges used to be published as the `nsfw/` subtree of `pos5drow/comical-bridges`, which now
- * publishes only the SFW ones. `movedFrom` names that old URL so a client re-adding this registry by
- * hand adopts its existing installs instead of stranding them; the old repo leaves a signed tombstone
- * at the same URL (`--tombstone --moved-to`) so clients that still hold it are forwarded
- * automatically. Both halves are needed — see "Moving a registry" in the comical README.
+ * `--moved-from` names the retired URL these bridges were served from, so a client re-adding this
+ * registry by hand adopts its existing installs instead of stranding them; the sibling repo leaves a
+ * signed tombstone at that URL (`--tombstone --moved-to`) so clients still holding it are forwarded
+ * automatically. See "Moving a registry" in the comical README.
  *
- * **The signing key must stay the same as the old repo's.** Key continuity is the only proof the same
+ * **The signing key must match the one on the tombstone.** Key continuity is the only proof the same
  * operator is behind both URLs, and it's what lets the move be followed (and the predecessor adopted)
  * without asking the user to confirm anything.
  *
@@ -27,7 +26,7 @@ const baseUrl =
   process.env.COMICAL_BASE_URL ??
   "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main";
 
-/** Where these bridges were published before the split. Asserted as this registry's predecessor. */
+/** The retired URL these bridges were served from. Asserted as this registry's predecessor. */
 const PREDECESSOR = "https://raw.githubusercontent.com/pos5drow/comical-bridges/main/nsfw/index.json";
 
 const args = [
