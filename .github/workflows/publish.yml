@@ -93,10 +93,15 @@ jobs:
           # publish.ts sorts bridges deterministically, so a rebuild of unchanged bundles leaves only
           # the `updated` timestamp different. Ignore that line (-I) so we don't commit on every run —
           # only when a bundle or real metadata actually changed.
-          if git diff --quiet -I '"updated":' -- index.json bridges; then
+          #
+          # Stage BEFORE comparing. `git diff` against the working tree cannot see untracked files,
+          # so once the artifacts stopped being committed from a local machine, a rebuild produced
+          # them fresh-and-untracked, the guard called that "unchanged", and CI published nothing —
+          # index.json 404'd for every client. `--cached` counts a new file as a change.
+          git add -A -- index.json bridges
+          if git diff --cached --quiet -I '"updated":' -- index.json bridges; then
             echo "Registry unchanged (timestamp-only) — nothing to publish."
             exit 0
           fi
-          git add index.json bridges
           git commit -m "ci: republish registry [skip ci]"
           git push
