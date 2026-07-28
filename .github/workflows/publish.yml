@@ -43,7 +43,13 @@ jobs:
           repository: porksphere/comical
           path: comical
 
+      # Pinned, not "latest": this repo publishes content-addressed bundles whose SHA-256 is
+      # verified by every client, and Bun's bundler emits different bytes across releases — an
+      # unpinned runner silently rehashes every bundle (and trips the version-immutability guard)
+      # the day Bun ships an update. Bump deliberately, with the republish that follows.
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
 
       - name: Install comical deps
         working-directory: comical
