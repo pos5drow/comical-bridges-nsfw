@@ -1,0 +1,7 @@
+node_modules/
+.build/
+*.tsbuildinfo
+# Keep registry.key.json PRIVATE — never commit signing keys.
+registry.key.json
+# Local credentials for the favorites round-trip test — NEVER commit.
+.creds.ehentai.json

@@ -1,0 +1,11 @@
+# LF in the working tree everywhere, matching CI (Linux) — this repo's artifacts are hashed, so a
+# platform-dependent checkout is never harmless.
+* text=auto eol=lf
+
+# The published registry is *content-addressed*: index.json pins each bundle's SHA-256, and clients
+# verify those exact bytes at install time. Git must not EOL-translate them at all — on a Windows
+# checkout (core.autocrlf=true) the working-tree copy would hash differently than what
+# raw.githubusercontent serves, which makes `publish:registry` trip its own version-immutability
+# guard with phantom "content changed" errors. `-text` pins the bytes byte-for-byte.
+bridges/** -text
+index.json -text

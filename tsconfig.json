@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["bun"],
+    "baseUrl": ".",
+    "//": "LOCAL LINK: resolve @comical/* to the sibling monorepo source. Replace with published npm versions once @comical/sdk ships.",
+    "paths": {
+      "@comical/contract": ["../comical/packages/contract/src/index.ts"],
+      "@comical/sdk": ["../comical/packages/sdk/src/index.ts"],
+      "@comical/core": ["../comical/packages/core/src/index.ts"],
+      "@comical/host-bun": ["../comical/packages/host-bun/src/index.ts"],
+      "@comical/testkit": ["../comical/packages/testkit/src/index.ts"]
+    }
+  },
+  "include": ["src", "*.ts"]
+}

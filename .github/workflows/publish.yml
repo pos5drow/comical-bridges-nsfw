@@ -1,0 +1,96 @@
+# Rebuild + republish the bridge registry whenever the bridge sources change on main.
+#
+# This repo is "local-link" (see README): it builds against a sibling checkout of the Comical
+# monorepo (`../comical`, public) resolved via tsconfig paths — so CI checks out both repos side by
+# side, installs, builds, tests, then runs `publish:registry` and commits the regenerated
+# `index.json` + `bridges/**` back to main.
+#
+# The commit is authored/committed as pos5drow (this repo's identity). The push uses the default
+# GITHUB_TOKEN; pushes made with GITHUB_TOKEN don't retrigger workflows, so there's no loop — the
+# `[skip ci]` marker and the head-commit guard below are just belt-and-suspenders.
+name: Publish registry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.ts'
+      - 'publish.ts'
+      - 'package.json'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-registry
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]') }}
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v4
+        with:
+          path: bridges-repo
+
+      - name: Check out comical (build/publish dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: porksphere/comical
+          path: comical
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install comical deps
+        working-directory: comical
+        run: bun install --frozen-lockfile
+
+      - name: Install deps
+        working-directory: bridges-repo
+        run: bun install
+
+      - name: Build + test
+        working-directory: bridges-repo
+        run: |
+          bun run build
+          bun test
+
+      - name: Publish registry
+        working-directory: bridges-repo
+        env:
+          COMICAL_REGISTRY_KEY: ${{ secrets.COMICAL_REGISTRY_KEY }}
+        run: |
+          # The Ed25519 signing key lives as a repo secret and is materialized to the gitignored
+          # path publish.ts expects. It is the SAME key the predecessor registry used — key
+          # continuity is what makes this registry's `movedFrom` claim (and the old repo's
+          # forwarding tombstone) trustworthy without asking every user to confirm the move.
+          # Fail closed: without it, publish.ts would happily regenerate the index *unsigned*,
+          # silently stripping every signature and the registry's publicKey — a trust downgrade no
+          # one would notice until a client stopped verifying.
+          if [ -z "$COMICAL_REGISTRY_KEY" ]; then
+            echo "::error::COMICAL_REGISTRY_KEY secret is missing — refusing to publish an unsigned registry."
+            exit 1
+          fi
+          printf '%s' "$COMICAL_REGISTRY_KEY" > registry.key.json
+          COMICAL_KEY=registry.key.json bun run publish:registry
+          rm -f registry.key.json
+
+      - name: Commit regenerated artifacts
+        working-directory: bridges-repo
+        run: |
+          git config user.name pos5drow
+          git config user.email pos5drow@gmail.com
+          # publish.ts sorts bridges deterministically, so a rebuild of unchanged bundles leaves only
+          # the `updated` timestamp different. Ignore that line (-I) so we don't commit on every run —
+          # only when a bundle or real metadata actually changed.
+          if git diff --quiet -I '"updated":' -- index.json bridges; then
+            echo "Registry unchanged (timestamp-only) — nothing to publish."
+            exit 0
+          fi
+          git add index.json bridges
+          git commit -m "ci: republish registry [skip ci]"
+          git push

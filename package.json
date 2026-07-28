@@ -1,0 +1,12 @@
+{
+  "name": "comical-bridges-nsfw",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Adult-only Comical bridges — built locally against the sibling ../comical and published as a registry Comical can source.",
+  "scripts": {
+    "build": "bun run build.ts",
+    "audit": "bun run audit.ts",
+    "publish:registry": "bun run publish.ts"
+  }
+}

@@ -1,0 +1,70 @@
+# Nightly LIVE bridge audit. Builds every bridge, runs the shared `@comical/testkit` conformance
+# evaluator against the REAL backends (measuring cover sizes too), and rewrites the README's
+# BRIDGE-STATUS block with the result. Flaky/blocked bridges (see audit.config.ts) show ⚠ and never
+# fail the run; a real regression on a non-flaky bridge fails the job (and skips the README commit).
+#
+# Like publish.yml: checks out this repo + the sibling ../comical, authors as pos5drow, pushes the
+# README back with the default GITHUB_TOKEN (no workflow re-trigger), and `[skip ci]` + the
+# timestamp-only guard keep it from committing on runs where nothing actually changed.
+name: Bridge audit
+
+on:
+  schedule:
+    - cron: '43 6 * * *' # nightly ~06:43 UTC (offset from the sibling repo's run)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bridge-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v4
+        with:
+          path: bridges-repo
+
+      - name: Check out comical (build/test dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: porksphere/comical
+          path: comical
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install comical deps
+        working-directory: comical
+        run: bun install --frozen-lockfile
+
+      - name: Install deps
+        working-directory: bridges-repo
+        run: bun install
+
+      - name: Build bridges
+        working-directory: bridges-repo
+        run: bun run build
+
+      - name: Run live audit + update README
+        working-directory: bridges-repo
+        run: bun run audit --write
+
+      - name: Commit refreshed status
+        if: ${{ always() }}
+        working-directory: bridges-repo
+        run: |
+          git config user.name pos5drow
+          git config user.email pos5drow@gmail.com
+          # The audit stamps a fresh "_Updated <date>…_" line into both files every run; ignore that
+          # (-I) so we only commit when the actual status/checks changed, not just the timestamp.
+          if git diff --quiet -I '_Updated .* by the nightly live audit' -- README.md AUDIT.md; then
+            echo "Status unchanged (timestamp-only) — nothing to commit."
+            exit 0
+          fi
+          git add README.md AUDIT.md
+          git commit -m "docs: bridge status [skip ci]"
+          git push
