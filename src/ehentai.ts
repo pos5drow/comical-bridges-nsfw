@@ -399,8 +399,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.2.4",
-    contractVersion: "1.0.0",
+    version: "0.3.0",
+    contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "settings", "direct", "favorites"],
