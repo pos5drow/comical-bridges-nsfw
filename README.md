@@ -34,11 +34,11 @@ flaky — these sites IP-gate datacenter (CI runner) addresses even when they wo
 <!-- BRIDGE-STATUS:START -->
 | Bridge | Status | Capabilities | Avg cover | Notes |
 |---|---|---|---|---|
-| `nhentai` | ⚠ (11✓ 2⚠ 0✗ 2⊘) | 7/10 | 33 KB (500×663) | Cloudflare / IP-gated from datacenters |
-| `e-hentai` | ⚠ (10✓ 3⚠ 0✗ 1⊘) | 6/6 | 18 KB (250×258) | sad-panda / IP + cookie gated from datacenters |
-| `hitomi` | ✓ (11✓ 0⚠ 0✗) | 5/8 | — | images need the host /img-proxy (Referer-gated), unavailable in the audit |
+| `nhentai` | ⚠ (0✓ 0⚠ 0✗) | 0/0 | — | load failed: bridge "pos5drow.nhentai" targets contract 1.0.0, incompatible with runtime 2.0.0 |
+| `e-hentai` | ⚠ (0✓ 0⚠ 0✗) | 0/0 | — | load failed: bridge "pos5drow.e-hentai" targets contract 1.0.0, incompatible with runtime 2.0.0 |
+| `hitomi` | ⚠ (0✓ 0⚠ 0✗) | 0/0 | — | load failed: bridge "pos5drow.hitomi" targets contract 1.0.0, incompatible with runtime 2.0.0 |
 
-_Updated 2026-07-29 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-07-30 by the nightly live audit ([`audit.ts`](audit.ts))._
 <!-- BRIDGE-STATUS:END -->
 
 ## Develop
