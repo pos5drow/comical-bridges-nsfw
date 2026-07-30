@@ -32,7 +32,13 @@ Every bridge here is adult-gated, so the audit runs them with `adult: "true"` an
 flaky — these sites IP-gate datacenter (CI runner) addresses even when they work fine from a phone.
 
 <!-- BRIDGE-STATUS:START -->
-_Not yet run — the nightly audit fills this in._
+| Bridge | Status | Capabilities | Avg cover | Notes |
+|---|---|---|---|---|
+| `nhentai` | ⚠ (0✓ 0⚠ 0✗) | 0/0 | — | load failed: bridge "pos5drow.nhentai" targets contract 1.0.0, incompatible with runtime 2.0.0 |
+| `e-hentai` | ⚠ (0✓ 0⚠ 0✗) | 0/0 | — | load failed: bridge "pos5drow.e-hentai" targets contract 1.0.0, incompatible with runtime 2.0.0 |
+| `hitomi` | ⚠ (0✓ 0⚠ 0✗) | 0/0 | — | load failed: bridge "pos5drow.hitomi" targets contract 1.0.0, incompatible with runtime 2.0.0 |
+
+_Updated 2026-07-30 by the nightly live audit ([`audit.ts`](audit.ts))._
 <!-- BRIDGE-STATUS:END -->
 
 ## Develop
