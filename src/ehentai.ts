@@ -733,6 +733,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       id: seriesId,
       title: meta?.title ?? seriesId,
       status: "completed",
+      shareUrl: `${this.base()}/g/${gid}/${token}/`,
     };
 
     if (meta?.thumb) info.thumbnailUrl = fullSizeThumbUrl(meta.thumb);

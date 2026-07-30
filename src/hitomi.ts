@@ -1026,7 +1026,7 @@ class HitomiBridge extends BridgeBase {
   async getSeriesDetails(seriesId: string): Promise<SeriesInfo> {
     const g = await this.fetchGallery(seriesId);
 
-    const info: SeriesInfo = { id: seriesId, title: g.title || seriesId };
+    const info: SeriesInfo = { id: seriesId, title: g.title || seriesId, shareUrl: `${SITE}/reader/${seriesId}.html` };
     if (g.files[0]?.hash) info.thumbnailUrl = this.proxied(this.coverUrl(g.files[0].hash));
     if (g.type) info.type = TYPE_LABELS[g.type] ?? g.type;
     if (g.files.length) info.pageCount = g.files.length;

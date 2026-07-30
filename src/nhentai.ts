@@ -218,7 +218,6 @@ class NhentaiBridge extends BridgeBase<Settings> {
 
   private cdnImageServer: string | undefined;
   private cdnThumbServer: string | undefined;
-  private cdnFetched = false;
   private tagNames = new Map<string, string>(); // tagId → name
   private lastDetail: { id: string; data: GalleryDetail } | undefined;
 
@@ -258,9 +257,10 @@ class NhentaiBridge extends BridgeBase<Settings> {
 
   // ── CDN ───────────────────────────────────────────────────────────────────
 
-  private async ensureCdn(): Promise<void> {
-    if (this.cdnFetched) return;
-    this.cdnFetched = true;
+  /** Fetch the CDN server config once, before any other method runs. A failure here is not fatal —
+   * imageServer()/thumbServer() fall back to hardcoded defaults, so a bridge-wide load failure never
+   * hinges on this one endpoint. */
+  async initialize(): Promise<void> {
     try {
       const cfg = await this.getJson<CdnConfigResponse>(`${BASE}/cdn`);
       this.cdnImageServer = cfg.image_servers?.[0];
@@ -268,13 +268,11 @@ class NhentaiBridge extends BridgeBase<Settings> {
     } catch { /* fall back to hardcoded servers below */ }
   }
 
-  private async imageServer(): Promise<string> {
-    await this.ensureCdn();
+  private imageServer(): string {
     return this.cdnImageServer ?? IMG_FALLBACK;
   }
 
-  private async thumbServer(): Promise<string> {
-    await this.ensureCdn();
+  private thumbServer(): string {
     return this.cdnThumbServer ?? THUMB_FALLBACK;
   }
 
@@ -331,8 +329,8 @@ class NhentaiBridge extends BridgeBase<Settings> {
     return entry;
   }
 
-  private async listToEntries(items: GalleryListItem[], excluded?: Set<string>): Promise<SeriesEntry[]> {
-    const thumb = await this.thumbServer();
+  private listToEntries(items: GalleryListItem[], excluded?: Set<string>): SeriesEntry[] {
+    const thumb = this.thumbServer();
     return items.map((item) => this.toEntry(item, thumb, excluded));
   }
 
@@ -444,7 +442,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
       const raw = await this.getJson<GalleryListItem[] | PaginatedGalleries>(`${BASE}/${list.path}`);
       const rawItems = Array.isArray(raw) ? raw : (raw.result ?? []);
       // A one-shot endpoint — the whole list arrives at once, so there is no next cursor.
-      return { items: await this.listToEntries(rawItems, excluded) };
+      return { items: this.listToEntries(rawItems, excluded) };
     }
 
     // nhentai's API is page-numbered and reports num_pages, so the cursor is just a page number.
@@ -453,7 +451,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
       `${BASE}/${list.path}?page=${page}&per_page=${PER_PAGE}`,
     );
     return {
-      items: await this.listToEntries(data.result ?? [], excluded),
+      items: this.listToEntries(data.result ?? [], excluded),
       nextCursor: nextPageCursor(page, page < (data.num_pages ?? 0)),
     };
   }
@@ -497,7 +495,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
         `${BASE}/galleries?page=${page}&per_page=${PER_PAGE}`,
       );
       return {
-        items: await this.listToEntries(data.result ?? [], excluded),
+        items: this.listToEntries(data.result ?? [], excluded),
         nextCursor: nextPageCursor(page, page < (data.num_pages ?? 0)),
       };
     }
@@ -507,7 +505,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
       `${BASE}/search?query=${q}&sort=${encodeURIComponent(sort)}&page=${page}`,
     );
     return {
-      items: await this.listToEntries(data.result ?? [], excluded),
+      items: this.listToEntries(data.result ?? [], excluded),
       nextCursor: nextPageCursor(page, page < (data.num_pages ?? 0)),
     };
   }
@@ -515,9 +513,9 @@ class NhentaiBridge extends BridgeBase<Settings> {
   // ── Series detail ─────────────────────────────────────────────────────────
 
   async getSeriesDetails(seriesId: string): Promise<SeriesInfo> {
-    // Only fetch the gallery detail on the critical path. CDN config is already warm from list/search
-    // calls (thumbServer() is called in listToEntries), so we can read the cached value directly
-    // without acquiring a rate-limiter slot. Related series are loaded lazily via getRelatedSeries.
+    // Only fetch the gallery detail on the critical path. CDN config is already warm from
+    // initialize(), so we can read the cached value directly without acquiring a rate-limiter slot.
+    // Related series are loaded lazily via getRelatedSeries.
     const g = await this.fetchDetail(seriesId);
     const thumb = this.cdnThumbServer ?? THUMB_FALLBACK;
 
@@ -525,6 +523,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
       id: seriesId,
       title: g.title.english ?? g.title.pretty ?? g.title.japanese ?? seriesId,
       status: "completed",
+      shareUrl: `https://nhentai.net/g/${seriesId}/`,
     };
 
     const coverPath = g.cover?.path ?? g.thumbnail?.path;
@@ -595,18 +594,16 @@ class NhentaiBridge extends BridgeBase<Settings> {
   async getRelatedSeries(seriesId: string): Promise<RelatedSeriesGroup[]> {
     const related = await this.fetchRelated(seriesId);
     if (!related.length) return [];
-    const series = await this.listToEntries(related);
+    const series = this.listToEntries(related);
     return [{ label: "More Like This", kind: "similar", series }];
   }
 
   // ── Direct pages ──────────────────────────────────────────────────────────
 
   async getSeriesPages(seriesId: string): Promise<Page[]> {
-    const [g, imgSrv, thumbSrv] = await Promise.all([
-      this.fetchDetail(seriesId),
-      this.imageServer(),
-      this.thumbServer(),
-    ]);
+    const g = await this.fetchDetail(seriesId);
+    const imgSrv = this.imageServer();
+    const thumbSrv = this.thumbServer();
     const referer = `https://nhentai.net/g/${seriesId}/`;
     return (g.pages ?? []).map((p): Page => ({
       index: p.number - 1,
@@ -632,7 +629,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
     this.requireKey();
     const page = pageFromCursor(req.cursor);
     const data = await this.getJson<PaginatedGalleries>(`${BASE}/favorites?page=${page}&per_page=${PER_PAGE}`);
-    const items = await this.listToEntries(data.result ?? []);
+    const items = this.listToEntries(data.result ?? []);
     // Prefer the server's page count when it's present; the favorites endpoint doesn't
     // reliably return `num_pages` (unlike galleries/search), and `page < (num_pages ?? 0)`
     // silently collapses to always-false when it's absent — stranding favorites on page 1.
