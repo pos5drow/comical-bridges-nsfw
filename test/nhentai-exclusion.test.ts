@@ -74,7 +74,7 @@ describe("nhentai exclude-tags in-bridge filtering", () => {
 
   test("Popular Now (non-paginated) redacts items whose tag_ids match", async () => {
     const bridge = factory(cannedHost());
-    const { items } = await bridge.getListItems("popular-now", 1, { excludedTags: ["100"] });
+    const { items } = await bridge.getListItems("popular-now", { excludedTags: ["100"] });
     expect(items).toHaveLength(2);
     expectRedacted(items[0]!, "1");
     expectVisible(items[1]!, "2", "Clean Two");
@@ -82,7 +82,7 @@ describe("nhentai exclude-tags in-bridge filtering", () => {
 
   test("New Arrivals (paginated) redacts items whose tag_ids match", async () => {
     const bridge = factory(cannedHost());
-    const { items } = await bridge.getListItems("new", 1, { excludedTags: ["100"] });
+    const { items } = await bridge.getListItems("new", { excludedTags: ["100"] });
     expect(items).toHaveLength(2);
     expectRedacted(items[0]!, "1");
     expectVisible(items[1]!, "2", "Clean Two");
@@ -91,7 +91,7 @@ describe("nhentai exclude-tags in-bridge filtering", () => {
   test("search redacts items whose tag_ids match (same as home sections)", async () => {
     const bridge = factory(cannedHost());
     // A non-empty query forces the /search endpoint (not the empty-date fast-path).
-    const { items } = await bridge.getSearchResults("anything", 1, { excludedTags: ["100"] });
+    const { items } = await bridge.getSearchResults({ text: "anything", excludedTags: ["100"] });
     expect(items).toHaveLength(2);
     expectRedacted(items[0]!, "1");
     expectVisible(items[1]!, "2", "Clean Two");
@@ -99,7 +99,7 @@ describe("nhentai exclude-tags in-bridge filtering", () => {
 
   test("empty date-sorted search fast-path also filters", async () => {
     const bridge = factory(cannedHost());
-    const { items } = await bridge.getSearchResults("", 1, { excludedTags: ["100"] });
+    const { items } = await bridge.getSearchResults({ text: "", excludedTags: ["100"] });
     expect(items).toHaveLength(2);
     expectRedacted(items[0]!, "1");
     expectVisible(items[1]!, "2", "Clean Two");
@@ -107,21 +107,21 @@ describe("nhentai exclude-tags in-bridge filtering", () => {
 
   test("no excluded tags → every item renders normally", async () => {
     const bridge = factory(cannedHost());
-    const { items } = await bridge.getListItems("popular-now", 1, {});
+    const { items } = await bridge.getListItems("popular-now");
     expectVisible(items[0]!, "1", "Tagged One");
     expectVisible(items[1]!, "2", "Clean Two");
   });
 
   test("blank / whitespace-only excluded ids are ignored", async () => {
     const bridge = factory(cannedHost());
-    const { items } = await bridge.getListItems("popular-now", 1, { excludedTags: ["  ", ""] });
+    const { items } = await bridge.getListItems("popular-now", { excludedTags: ["  ", ""] });
     expectVisible(items[0]!, "1", "Tagged One");
     expectVisible(items[1]!, "2", "Clean Two");
   });
 
   test("a non-matching exclusion leaves all items visible", async () => {
     const bridge = factory(cannedHost());
-    const { items } = await bridge.getListItems("popular-now", 1, { excludedTags: ["999"] });
+    const { items } = await bridge.getListItems("popular-now", { excludedTags: ["999"] });
     expectVisible(items[0]!, "1", "Tagged One");
     expectVisible(items[1]!, "2", "Clean Two");
   });

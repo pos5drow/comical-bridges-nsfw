@@ -19,11 +19,12 @@ import {
   BridgeBase,
   type BridgeInfo,
   type Filter,
-  type ListOptions,
+  type ListRequest,
   type Page,
+  type PagedRequest,
   type PagedResults,
   type RelatedSeriesGroup,
-  type SearchOptions,
+  type SearchRequest,
   type CardBadge,
   type SeriesEntry,
   type SeriesInfo,
@@ -36,6 +37,8 @@ import {
   abbreviateLanguage,
   defineBridge,
   defineSettings,
+  nextPageCursor,
+  pageFromCursor,
   parseFilterIncludeExclude,
 } from "@comical/sdk";
 
@@ -333,9 +336,9 @@ class NhentaiBridge extends BridgeBase<Settings> {
     return items.map((item) => this.toEntry(item, thumb, excluded));
   }
 
-  /** Build the excluded-tag-id set from injected options (numeric tag ids, as `getTags()` returns). */
-  private excludedSet(options?: { excludedTags?: string[] }): Set<string> | undefined {
-    const ids = options?.excludedTags;
+  /** Build the excluded-tag-id set from the request (numeric tag ids, as `getTags()` returns). */
+  private excludedSet(req: { excludedTags?: string[] | undefined }): Set<string> | undefined {
+    const ids = req.excludedTags;
     if (!ids?.length) return undefined;
     const set = new Set(ids.map((s) => String(s).trim()).filter(Boolean));
     return set.size ? set : undefined;
@@ -432,40 +435,39 @@ class NhentaiBridge extends BridgeBase<Settings> {
     return Promise.resolve(LISTS.map(({ path: _p, paginated: _q, ...list }) => list));
   }
 
-  async getListItems(listId: string, page: number, options?: ListOptions): Promise<PagedResults<SeriesEntry>> {
+  async getListItems(listId: string, req: ListRequest = {}): Promise<PagedResults<SeriesEntry>> {
     const list = LISTS.find((l) => l.id === listId);
     if (!list) throw new Error(`unknown list: ${listId}`);
-    const excluded = this.excludedSet(options);
+    const excluded = this.excludedSet(req);
 
     if (!list.paginated) {
       const raw = await this.getJson<GalleryListItem[] | PaginatedGalleries>(`${BASE}/${list.path}`);
       const rawItems = Array.isArray(raw) ? raw : (raw.result ?? []);
-      return { items: await this.listToEntries(rawItems, excluded), page: 1, hasNextPage: false };
+      // A one-shot endpoint — the whole list arrives at once, so there is no next cursor.
+      return { items: await this.listToEntries(rawItems, excluded) };
     }
 
+    // nhentai's API is page-numbered and reports num_pages, so the cursor is just a page number.
+    const page = pageFromCursor(req.cursor);
     const data = await this.getJson<PaginatedGalleries>(
       `${BASE}/${list.path}?page=${page}&per_page=${PER_PAGE}`,
     );
     return {
       items: await this.listToEntries(data.result ?? [], excluded),
-      page,
-      hasNextPage: page < (data.num_pages ?? 0),
+      nextCursor: nextPageCursor(page, page < (data.num_pages ?? 0)),
     };
   }
 
   // ── Search ────────────────────────────────────────────────────────────────
 
-  async getSearchResults(
-    query: string,
-    page: number,
-    options?: SearchOptions,
-  ): Promise<PagedResults<SeriesEntry>> {
-    const sort = options?.sort?.key ?? "date";
-    const excluded = this.excludedSet(options);
+  async getSearchResults(req: SearchRequest): Promise<PagedResults<SeriesEntry>> {
+    const page = pageFromCursor(req.cursor);
+    const sort = req.sort?.key ?? "date";
+    const excluded = this.excludedSet(req);
     const parts: string[] = [];
-    if (query.trim()) parts.push(query.trim());
+    if (req.text.trim()) parts.push(req.text.trim());
 
-    for (const f of options?.filters ?? []) {
+    for (const f of req.filters ?? []) {
       if (f.key === "language") {
         const { include, exclude } = parseFilterIncludeExclude(f.value);
         for (const lang of include) parts.push(`language:${lang}`);
@@ -496,8 +498,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
       );
       return {
         items: await this.listToEntries(data.result ?? [], excluded),
-        page,
-        hasNextPage: page < (data.num_pages ?? 0),
+        nextCursor: nextPageCursor(page, page < (data.num_pages ?? 0)),
       };
     }
 
@@ -507,8 +508,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
     );
     return {
       items: await this.listToEntries(data.result ?? [], excluded),
-      page,
-      hasNextPage: page < (data.num_pages ?? 0),
+      nextCursor: nextPageCursor(page, page < (data.num_pages ?? 0)),
     };
   }
 
@@ -628,20 +628,18 @@ class NhentaiBridge extends BridgeBase<Settings> {
     }
   }
 
-  async getFavorites(page: number): Promise<PagedResults<SeriesEntry>> {
+  async getFavorites(req: PagedRequest = {}): Promise<PagedResults<SeriesEntry>> {
     this.requireKey();
+    const page = pageFromCursor(req.cursor);
     const data = await this.getJson<PaginatedGalleries>(`${BASE}/favorites?page=${page}&per_page=${PER_PAGE}`);
     const items = await this.listToEntries(data.result ?? []);
-    return {
-      items,
-      page,
-      // Prefer the server's page count when it's present; the favorites endpoint doesn't
-      // reliably return `num_pages` (unlike galleries/search), and `page < (num_pages ?? 0)`
-      // silently collapses to always-false when it's absent — stranding favorites on page 1.
-      // Fall back to "a full page implies more" so pagination still advances (an over-count
-      // self-corrects: the next page comes back empty with hasNextPage false).
-      hasNextPage: data.num_pages != null ? page < data.num_pages : items.length >= PER_PAGE,
-    };
+    // Prefer the server's page count when it's present; the favorites endpoint doesn't
+    // reliably return `num_pages` (unlike galleries/search), and `page < (num_pages ?? 0)`
+    // silently collapses to always-false when it's absent — stranding favorites on page 1.
+    // Fall back to "a full page implies more" so the walk still advances (an over-count
+    // self-corrects: the next page comes back empty and emits no further cursor).
+    const hasMore = data.num_pages != null ? page < data.num_pages : items.length >= PER_PAGE;
+    return { items, nextCursor: nextPageCursor(page, hasMore) };
   }
 
   async addFavorite(seriesId: string): Promise<void> {

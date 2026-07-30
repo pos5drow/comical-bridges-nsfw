@@ -28,11 +28,11 @@ import {
   BridgeBase,
   type BridgeInfo,
   type Filter,
-  type ListOptions,
+  type ListRequest,
   type Page,
   type PagedResults,
   type RelatedSeriesGroup,
-  type SearchOptions,
+  type SearchRequest,
   type SeriesEntry,
   type SeriesInfo,
   type SeriesList,
@@ -42,6 +42,8 @@ import {
   abbreviateLanguage,
   base64ToBytes,
   defineBridge,
+  nextPageCursor,
+  pageFromCursor,
   parseFilterIncludeExclude,
 } from "@comical/sdk";
 import { LANGUAGES } from "./hitomi/languages.ts";
@@ -84,7 +86,7 @@ const MAX_TERM_BYTES = 1_000_000;
 const SCAN_CHUNK = 128;
 /** Ceiling on galleryblock fetches spent filtering one page, so a very rare predicate can't run away. */
 const MAX_CARDS_PER_PAGE = 300;
-const CURSOR_TTL_MS = 5 * 60 * 1000;
+const SCAN_TTL_MS = 5 * 60 * 1000;
 const INDEX_VERSION_TTL_MS = 5 * 60 * 1000;
 const CARD_CACHE_MAX = 600;
 
@@ -334,7 +336,7 @@ class HitomiBridge extends BridgeBase {
   /** nozomi url → byte length (id count × 4). Cheap to obtain, worth not re-asking. */
   private readonly nozomiSizes = new Map<string, number>();
   /** query signature → scan progress, so sequential paging of a filtered query stays amortized O(1). */
-  private readonly cursors = new Map<string, { at: number; ids: number[]; seen: Set<number>; scanned: number }>();
+  private readonly scans = new Map<string, { at: number; ids: number[]; seen: Set<number>; scanned: number }>();
   private readonly cardCache = new Map<number, Card | null>();
   /** Last gallery JSON, so details + related + pages don't each refetch it. */
   private lastGallery: { id: string; value: GalleryInfo } | undefined;
@@ -602,9 +604,9 @@ class HitomiBridge extends BridgeBase {
     return cards.filter((c): c is Card => c !== null).map((c) => this.redact(c, excluded));
   }
 
-  /** Build the excluded-tag-id set from injected options (`namespace:value`, as `getTags()` returns). */
-  private excludedSet(options?: { excludedTags?: string[] }): Set<string> | undefined {
-    const ids = options?.excludedTags;
+  /** Build the excluded-tag-id set from the request (`namespace:value`, as `getTags()` returns). */
+  private excludedSet(req: { excludedTags?: string[] | undefined }): Set<string> | undefined {
+    const ids = req.excludedTags;
     if (!ids?.length) return undefined;
     const set = new Set(ids.map((s) => String(s).trim().toLowerCase()).filter(Boolean));
     return set.size ? set : undefined;
@@ -800,29 +802,29 @@ class HitomiBridge extends BridgeBase {
       return { ids, hasNext };
     }
 
-    let cursor = this.cursors.get(sig);
-    if (!cursor || Date.now() - cursor.at > CURSOR_TTL_MS) {
-      cursor = { at: Date.now(), ids: [], seen: new Set(), scanned: 0 };
-      this.cursors.set(sig, cursor);
+    let scan = this.scans.get(sig);
+    if (!scan || Date.now() - scan.at > SCAN_TTL_MS) {
+      scan = { at: Date.now(), ids: [], seen: new Set(), scanned: 0 };
+      this.scans.set(sig, scan);
     }
     // `random` picks an independent window per iteration, so windows can overlap; every other
     // direction walks the base in order and can't. Dedupe unconditionally — a page must never
     // repeat an id, and a Set membership test is far cheaper than the request that produced it.
     const accept = (id: number) => {
-      if (cursor!.seen.has(id)) return;
-      cursor!.seen.add(id);
-      cursor!.ids.push(id);
+      if (scan!.seen.has(id)) return;
+      scan!.seen.add(id);
+      scan!.ids.push(id);
     };
 
     const need = page * PER_PAGE;
     const needsCards = plan.lateInclude.length > 0 || plan.lateExclude.length > 0;
     let cardsFetched = 0;
 
-    while (cursor.ids.length <= need && cursor.scanned < total) {
+    while (scan.ids.length <= need && scan.scanned < total) {
       if (needsCards && cardsFetched >= MAX_CARDS_PER_PAGE) break;
-      const chunk = await this.readWindow(plan.base, cursor.scanned, SCAN_CHUNK, q, sig);
+      const chunk = await this.readWindow(plan.base, scan.scanned, SCAN_CHUNK, q, sig);
       if (!chunk.length) break;
-      cursor.scanned += chunk.length;
+      scan.scanned += chunk.length;
 
       let candidates = chunk;
       for (const set of plan.intersect) candidates = candidates.filter((id) => set.has(id));
@@ -846,11 +848,11 @@ class HitomiBridge extends BridgeBase {
         accept(id);
       });
     }
-    cursor.at = Date.now();
+    scan.at = Date.now();
 
     const start = (page - 1) * PER_PAGE;
-    const ids = cursor.ids.slice(start, start + PER_PAGE);
-    const hasNext = cursor.ids.length > start + PER_PAGE || cursor.scanned < total;
+    const ids = scan.ids.slice(start, start + PER_PAGE);
+    const hasNext = scan.ids.length > start + PER_PAGE || scan.scanned < total;
     return { ids, hasNext };
   }
 
@@ -858,7 +860,7 @@ class HitomiBridge extends BridgeBase {
   private async run(q: ParsedQuery, page: number, excluded: Set<string> | undefined): Promise<PagedResults<SeriesEntry>> {
     const plan = await this.plan(q);
     const { ids, hasNext } = await this.collect(q, plan, page);
-    return { items: await this.idsToEntries(ids, excluded), page, hasNextPage: hasNext };
+    return { items: await this.idsToEntries(ids, excluded), nextCursor: nextPageCursor(page, hasNext) };
   }
 
   // ── Filters / sort ───────────────────────────────────────────────────────────
@@ -887,15 +889,15 @@ class HitomiBridge extends BridgeBase {
    * Fold filter values into a parsed query. Comma-separated text filters accept a `-` prefix per
    * entry (`-shindol`) to negate, matching the query language's own syntax.
    */
-  private applyFilters(q: ParsedQuery, options?: { filters?: SearchOptions["filters"]; sort?: SearchOptions["sort"] }): void {
-    const sort = SORTS.find((s) => s.key === options?.sort?.key);
+  private applyFilters(q: ParsedQuery, req: { filters?: SearchRequest["filters"]; sort?: SearchRequest["sort"] }): void {
+    const sort = SORTS.find((s) => s.key === req.sort?.key);
     if (sort) {
       q.sort = { ...sort.state };
       // `random` ignores direction; everything else honours it (ascending reads off the index tail).
-      if (q.sort.direction !== "random" && options?.sort?.ascending) q.sort.direction = "asc";
+      if (q.sort.direction !== "random" && req.sort?.ascending) q.sort.direction = "asc";
     }
 
-    for (const f of options?.filters ?? []) {
+    for (const f of req.filters ?? []) {
       if (f.key === "language") {
         if (typeof f.value === "string" && f.value) q.language = f.value;
         continue;
@@ -950,24 +952,25 @@ class HitomiBridge extends BridgeBase {
     return LISTS.map(({ sort: _s, ...list }) => list);
   }
 
-  async getListItems(listId: string, page: number, options?: ListOptions): Promise<PagedResults<SeriesEntry>> {
+  async getListItems(listId: string, req: ListRequest = {}): Promise<PagedResults<SeriesEntry>> {
     const list = LISTS.find((l) => l.id === listId);
     if (!list) throw new Error(`unknown list: ${listId}`);
 
     // A list is just a default ordering over the whole index, so it runs through the same engine —
     // which is what lets the language filter, an in-list query and tag exclusion apply while browsing.
-    const q = parseQuery(options?.query ?? "");
+    const q = parseQuery(req.query ?? "");
     q.sort = { ...(SORTS.find((s) => s.key === list.sort)?.state ?? DEFAULT_SORT) };
-    this.applyFilters(q, options);
-    return this.run(q, page, this.excludedSet(options));
+    this.applyFilters(q, req);
+    // The scan engine works in pages over its own index, so a plain page cursor is the right token.
+    return this.run(q, pageFromCursor(req.cursor), this.excludedSet(req));
   }
 
   // ── Search ─────────────────────────────────────────────────────────────────
 
-  async getSearchResults(query: string, page: number, options?: SearchOptions): Promise<PagedResults<SeriesEntry>> {
-    const q = parseQuery(query);
-    this.applyFilters(q, options);
-    return this.run(q, page, this.excludedSet(options));
+  async getSearchResults(req: SearchRequest): Promise<PagedResults<SeriesEntry>> {
+    const q = parseQuery(req.text);
+    this.applyFilters(q, req);
+    return this.run(q, pageFromCursor(req.cursor), this.excludedSet(req));
   }
 
   // ── Tags ───────────────────────────────────────────────────────────────────

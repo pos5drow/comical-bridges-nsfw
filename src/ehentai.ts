@@ -10,7 +10,7 @@
  * ExHentai (sadpanda) additionally requires a valid `igneous` cookie.
  *
  * API surface:
- *  - Gallery listing/search: HTML scraping of /?page=N&f_search=Q
+ *  - Gallery listing/search: HTML scraping of /?f_search=Q, walked via the site's ?next=GID seek link
  *  - Gallery metadata: JSON via POST api.e-hentai.org/api.php (gdata method)
  *  - Page image URLs: gallery viewer HTML for filehashes + showpage API per image
  */
@@ -20,11 +20,12 @@ import {
   type CardBadge,
   type Filter,
   type InferSettings,
-  type ListOptions,
+  type ListRequest,
   type Page,
   type PageThumbnail,
+  type PagedRequest,
   type PagedResults,
-  type SearchOptions,
+  type SearchRequest,
   type SeriesEntry,
   type SeriesInfo,
   type SeriesList,
@@ -32,8 +33,10 @@ import {
   type TagGroup,
   type TagKind,
   abbreviateLanguage,
+  decodeCursor,
   defineBridge,
   defineSettings,
+  encodeCursor,
 } from "@comical/sdk";
 
 const EH_BASE = "https://e-hentai.org";
@@ -386,9 +389,6 @@ function spriteThumb(t: SpriteTile): PageThumbnail {
 const VIEWER_PAGE_SIZE = 20;
 
 class EHentaiBridge extends BridgeBase<Settings> {
-  // Next-page cursor URLs keyed by context ("home" or "search:{params}").
-  // Populated when page N is fetched; consumed when page N+1 is requested.
-  private readonly nextUrls = new Map<string, string>();
   // Cache for viewer-page hashes: key = `${gid}:${viewerPageIndex}`, value = pageNum → hash.
   // Avoids re-fetching the same viewer page when multiple resolvePage calls land simultaneously.
   private readonly hashCache = new Map<string, Map<number, string>>();
@@ -500,35 +500,49 @@ class EHentaiBridge extends BridgeBase<Settings> {
     ]);
   }
 
-  async getListItems(listId: string, page: number, _options?: ListOptions): Promise<PagedResults<SeriesEntry>> {
+  async getListItems(listId: string, req: ListRequest = {}): Promise<PagedResults<SeriesEntry>> {
     if (listId === "home") {
-      const url = page === 1 ? `${this.base()}/` : (this.nextUrls.get("home") ?? `${this.base()}/`);
-      const { result, nextUrl } = await this.fetchListing(url, page);
-      if (nextUrl) this.nextUrls.set("home", this.resolveUrl(nextUrl));
-      else this.nextUrls.delete("home");
-      return result;
+      return this.fetchListing(this.seekUrl(req.cursor) ?? `${this.base()}/`);
     }
     if (listId === "popular") {
-      return (await this.fetchListing(`${this.base()}/popular`, page, false)).result;
+      // /popular is a single snapshot page with no next link — never paginated.
+      return this.fetchListing(`${this.base()}/popular`, false);
     }
     throw new Error(`Unknown list: ${listId}`);
   }
 
+  /**
+   * Read the seek URL out of a cursor. E-hentai paginates by `?next=GID`, not by page number, so the
+   * cursor carries the whole next-page URL the previous response linked to. That URL is
+   * self-describing — filters and query included — which is why resuming a search needs no
+   * bookkeeping on this side. An absent or unusable cursor means "start over", as everywhere else.
+   */
+  private seekUrl(cursor: string | undefined): string | undefined {
+    const url = decodeCursor<{ url?: unknown }>(cursor)?.url;
+    // Only ever follow a cursor back to the site this bridge is configured for.
+    return typeof url === "string" && url.startsWith(this.base()) ? url : undefined;
+  }
+
   // ── Search ────────────────────────────────────────────────────────────────
 
-  async getSearchResults(query: string, page: number, options?: SearchOptions): Promise<PagedResults<SeriesEntry>> {
+  async getSearchResults(req: SearchRequest): Promise<PagedResults<SeriesEntry>> {
+    // A cursor already encodes the full seek URL, query params and all, so there is nothing to
+    // rebuild when resuming — hand it straight back to the site.
+    const seek = this.seekUrl(req.cursor);
+    if (seek) return this.fetchListing(seek);
+
     const params = new URLSearchParams();
     const parts: string[] = [];
 
-    if (query.trim()) parts.push(query.trim());
+    if (req.text.trim()) parts.push(req.text.trim());
 
     // Language → search-syntax tags (e.g. "language:english")
-    for (const lang of ((options?.filters?.find((f) => f.key === "language")?.value ?? []) as string[])) {
+    for (const lang of ((req.filters?.find((f) => f.key === "language")?.value ?? []) as string[])) {
       parts.push(`language:${lang}`);
     }
 
     // Category multiselect → exclusion bitmask (f_cats = all ^ selected)
-    const cats = (options?.filters?.find((f) => f.key === "category")?.value ?? []) as string[];
+    const cats = (req.filters?.find((f) => f.key === "category")?.value ?? []) as string[];
     if (cats.length > 0) {
       const included = cats.reduce((acc, c) => acc | (CAT_BITS[c] ?? 0), 0);
       params.set("f_cats", String(ALL_CATS_MASK ^ included));
@@ -539,52 +553,29 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // Minimum rating → advanced-search star floor (f_srdd takes 2–5; "0"/absent = any).
     // E-hentai gallery search has no rating/favorite *sort* (that's Toplists-only), so this
     // star floor is how the site surfaces higher-quality results for a query.
-    const minRating = (options?.filters?.find((f) => f.key === "minRating")?.value ?? "") as string;
+    const minRating = (req.filters?.find((f) => f.key === "minRating")?.value ?? "") as string;
     if (minRating && minRating !== "0") {
       params.set("advsearch", "1");
       params.set("f_srdd", minRating);
     }
 
-    // Use cursor pagination: page 1 always fetches the first page; subsequent pages
-    // use the ?next=GID cursor extracted from the previous page's HTML.
-    const searchKey = `search:${params.toString()}`;
-    let url: string;
-    if (page === 1) {
-      url = `${this.base()}/?${params.toString()}`;
-      this.nextUrls.delete(searchKey);
-    } else {
-      url = this.nextUrls.get(searchKey) ?? `${this.base()}/?${params.toString()}`;
-    }
-
-    const { result, nextUrl } = await this.fetchListing(url, page);
-    if (nextUrl) this.nextUrls.set(searchKey, this.resolveUrl(nextUrl));
-    else this.nextUrls.delete(searchKey);
-    return result;
+    return this.fetchListing(`${this.base()}/?${params.toString()}`);
   }
 
-  private async fetchListing(
-    url: string,
-    page: number,
-    paginated = true,
-  ): Promise<{ result: PagedResults<SeriesEntry>; nextUrl?: string }> {
-    return this.listingFromHtml(await this.getHtml(url), page, paginated);
+  private async fetchListing(url: string, paginated = true): Promise<PagedResults<SeriesEntry>> {
+    return this.listingFromHtml(await this.getHtml(url), paginated);
   }
 
-  /** Turn a gallery-listing page's HTML into enriched results + the next-page cursor. */
-  private async listingFromHtml(
-    html: string,
-    page: number,
-    paginated = true,
-  ): Promise<{ result: PagedResults<SeriesEntry>; nextUrl?: string }> {
+  /** Turn a gallery-listing page's HTML into enriched results plus the seek cursor for the next page. */
+  private async listingFromHtml(html: string, paginated = true): Promise<PagedResults<SeriesEntry>> {
     const pairs = extractGalleryPairs(html);
-    // Trust the `?next=GID` seek cursor, not a 25-per-page count: the last page routinely
-    // has a full 25 items but no "Next" link, so a count heuristic would report hasNextPage
-    // while the cursor is empty — the caller then re-requests and the empty cursor falls back
-    // to page 1, re-serving it. `getFavorites` already derives hasNextPage this way.
+    // The `?next=GID` seek link is the only trustworthy "is there more" answer: the last page
+    // routinely has a full 25 items, so a per-page count would claim another page exists. Deriving
+    // the cursor straight from the link means the two can't disagree — no link, no cursor, walk over.
     const nextUrl = paginated ? extractNextUrl(html) : undefined;
-    const hasNext = !!nextUrl;
+    const nextCursor = nextUrl ? encodeCursor({ url: this.resolveUrl(nextUrl) }) : undefined;
 
-    if (pairs.length === 0) return { result: { items: [], page, hasNextPage: false } };
+    if (pairs.length === 0) return { items: [] };
 
     // gdata API accepts at most 25 pairs per request; chunk accordingly.
     const GDATA_BATCH = 25;
@@ -614,7 +605,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       return entry;
     });
 
-    return { result: { items, page, hasNextPage: hasNext }, nextUrl };
+    return { items, nextCursor };
   }
 
   // ── Filters / sort ────────────────────────────────────────────────────────
@@ -677,11 +668,9 @@ class EHentaiBridge extends BridgeBase<Settings> {
   // categories are merged into one bucket (favcat=all); new favorites land in the user's chosen default
   // slot. URLs derive from base(), so ExHentai works automatically.
 
-  async getFavorites(page: number): Promise<PagedResults<SeriesEntry>> {
+  async getFavorites(req: PagedRequest = {}): Promise<PagedResults<SeriesEntry>> {
     this.requireAuth();
-    const first = `${this.base()}/favorites.php?favcat=all`;
-    const url = page === 1 ? first : (this.nextUrls.get("favorites") ?? first);
-    if (page === 1) this.nextUrls.delete("favorites");
+    const url = this.seekUrl(req.cursor) ?? `${this.base()}/favorites.php?favcat=all`;
 
     const html = await this.getHtml(url);
     if (isLoggedOut(html)) {
@@ -690,11 +679,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       );
     }
 
-    const { result, nextUrl } = await this.listingFromHtml(html, page);
-    if (nextUrl) this.nextUrls.set("favorites", this.resolveUrl(nextUrl));
-    else this.nextUrls.delete("favorites");
-    // Favorites pages don't follow the 25-per-page assumption; trust the cursor link instead.
-    return { ...result, hasNextPage: !!nextUrl };
+    return this.listingFromHtml(html);
   }
 
   async addFavorite(seriesId: string): Promise<void> {

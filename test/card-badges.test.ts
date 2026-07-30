@@ -36,7 +36,7 @@ function nhentaiHost(): HostCapabilities {
 describe("nhentai card language badge", () => {
   test("tags each card with its language only, from inline tag_ids", async () => {
     const bridge = nhentaiFactory(nhentaiHost());
-    const { items } = await bridge.getListItems("popular-now", 1);
+    const { items } = await bridge.getListItems("popular-now");
     expect(items[0]!.badges).toEqual([{ text: "EN", position: "bottom-right", tone: "info" }]);
     expect(items[1]!.badges).toEqual([{ text: "JP", position: "bottom-right", tone: "info" }]);
     // No language tag → no badge at all.
