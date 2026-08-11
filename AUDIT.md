@@ -5,14 +5,15 @@ backend. ✓ pass · ⚠ warn · ✗ fail · ⊘ skipped (auth-gated with no cre
 sort/filter probe — never a defect). Warnings never fail the run; a tolerated flaky/blocked bridge
 shows ⚠ even for a hard failure.
 
-## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
+## `nhentai` — ⚠ (13✓ 3⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 29 KB (500×689) · sampled 8 · failed 0 · bytes min 6 KB / avg 29 KB / median 29 KB / max 55 KB · dims avg 500×689 (max 500×909) · aspect avg 0.77
+**7/10 capabilities** · cover 26 KB (500×623) · sampled 8 · failed 0 · bytes min 15 KB / avg 26 KB / median 26 KB / max 37 KB · dims avg 500×623 (max 500×706) · aspect avg 0.87
 
 > Cloudflare / IP-gated from datacenters
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
+| ⚠ | `read.details.author` | core | series details have no author |
 | ⚠ | `read.details.description` | core | series details have no description |
 | ⚠ | `read.details.genres` | core | series details have no genre tag group (kind: "genre") |
 | ⊘ | `sort.effect` | sort | asc/desc on "date" produced identical order |
@@ -25,15 +26,15 @@ shows ⚠ even for a hard failure.
 | ✓ | `search.items` | search | search returned 25 item(s) |
 | ✓ | `search.cursor` | search | nextCursor advanced to 24 further item(s) |
 | ✓ | `filters.descriptors` | filters | getFilters returned 4 filter(s) |
-| ✓ | `filters.effect` | filters | filter "language" changed results (25→24) |
+| ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 37 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 58 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `e-hentai` — ⚠ (12✓ 1⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 24 KB (250×308) · sampled 8 · failed 0 · bytes min 8 KB / avg 24 KB / median 24 KB / max 31 KB · dims avg 250×308 (max 250×366) · aspect avg 0.91
+**6/6 capabilities** · cover 20 KB (250×281) · sampled 8 · failed 0 · bytes min 10 KB / avg 20 KB / median 18 KB / max 31 KB · dims avg 250×281 (max 250×375) · aspect avg 0.98
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -51,7 +52,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 43 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 44 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ✓ (13✓ 0⚠ 0✗)
@@ -73,7 +74,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 55 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 70 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-08-10 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-08-11 by the nightly live audit ([`audit.ts`](audit.ts))._
