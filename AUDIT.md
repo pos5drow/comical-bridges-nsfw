@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 26 KB (500×652) · sampled 8 · failed 0 · bytes min 16 KB / avg 26 KB / median 26 KB / max 31 KB · dims avg 500×652 (max 500×711) · aspect avg 0.84
+**7/10 capabilities** · cover 33 KB (500×712) · sampled 8 · failed 0 · bytes min 24 KB / avg 33 KB / median 31 KB / max 47 KB · dims avg 500×712 (max 500×736) · aspect avg 0.70
 
 > Cloudflare / IP-gated from datacenters
 
@@ -33,7 +33,7 @@ shows ⚠ even for a hard failure.
 
 ## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 20 KB (250×297) · sampled 8 · failed 0 · bytes min 12 KB / avg 20 KB / median 19 KB / max 35 KB · dims avg 250×297 (max 250×375) · aspect avg 0.92
+**6/6 capabilities** · cover 20 KB (250×326) · sampled 8 · failed 0 · bytes min 11 KB / avg 20 KB / median 21 KB / max 29 KB · dims avg 250×326 (max 250×375) · aspect avg 0.82
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -53,7 +53,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 857 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 300 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ✓ (13✓ 0⚠ 0✗)
@@ -75,7 +75,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 43 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 401 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-08-18 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-08-19 by the nightly live audit ([`audit.ts`](audit.ts))._
