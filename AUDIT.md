@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 30 KB (500×702) · sampled 8 · failed 0 · bytes min 17 KB / avg 30 KB / median 26 KB / max 59 KB · dims avg 500×702 (max 500×706) · aspect avg 0.71
+**7/10 capabilities** · cover 28 KB (500×719) · sampled 8 · failed 0 · bytes min 19 KB / avg 28 KB / median 28 KB / max 38 KB · dims avg 500×719 (max 500×750) · aspect avg 0.70
 
 > Cloudflare / IP-gated from datacenters
 
@@ -23,17 +23,17 @@ shows ⚠ even for a hard failure.
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
-| ✓ | `search.cursor` | search | nextCursor advanced to 25 further item(s) |
+| ✓ | `search.cursor` | search | nextCursor advanced to 24 further item(s) |
 | ✓ | `filters.descriptors` | filters | getFilters returned 4 filter(s) |
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 36 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 55 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 24 KB (250×304) · sampled 8 · failed 0 · bytes min 17 KB / avg 24 KB / median 20 KB / max 40 KB · dims avg 250×304 (max 250×375) · aspect avg 0.89
+**6/6 capabilities** · cover 20 KB (250×279) · sampled 8 · failed 0 · bytes min 12 KB / avg 20 KB / median 21 KB / max 26 KB · dims avg 250×279 (max 250×365) · aspect avg 0.97
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -45,7 +45,7 @@ shows ⚠ even for a hard failure.
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: favorites require your e-hentai session cookies — on a logged-in browser open DevTools → Application → Cookies and paste ipb_member_id and ipb_pass_hash into this bridge's settings |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 67 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 66 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -53,7 +53,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 1054 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 650 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ✓ (13✓ 0⚠ 0✗)
@@ -75,7 +75,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 2 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 74 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-09-25 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-09-26 by the nightly live audit ([`audit.ts`](audit.ts))._
