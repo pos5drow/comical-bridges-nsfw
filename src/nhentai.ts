@@ -19,6 +19,7 @@ import {
   BridgeBase,
   type BridgeInfo,
   type Filter,
+  type InfoCell,
   type ListRequest,
   type Page,
   type PagedRequest,
@@ -123,6 +124,9 @@ interface GalleryDetail {
   pages?: PageItem[];
   tags?: GalleryTag[];
   num_pages?: number;
+  num_favorites?: number;
+  /** Epoch seconds. */
+  upload_date?: number;
 }
 
 interface PaginatedGalleries {
@@ -201,13 +205,20 @@ const LISTS: ReadonlyArray<ListDef> = [
   { id: "new", name: "New Arrivals", layout: "grid", featured: true, path: "galleries", paginated: true },
 ];
 
+/** Epoch seconds → "YYYY-MM-DD" in UTC, or nothing for a value that isn't a date. */
+function isoDate(epochSeconds: number): string | undefined {
+  if (!Number.isFinite(epochSeconds) || epochSeconds <= 0) return undefined;
+  const date = new Date(epochSeconds * 1000);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
+}
+
 // ── Bridge ────────────────────────────────────────────────────────────────────
 
 class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.1",
+    version: "0.2.2",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -585,6 +596,21 @@ class NhentaiBridge extends BridgeBase<Settings> {
     if (tagGroups.length) info.tagGroups = tagGroups;
 
     if (g.num_pages) info.pageCount = g.num_pages;
+
+    // Whichever of the gallery's three titles isn't the one shown. `pretty` is the title without its
+    // bracketed credits.
+    const altTitles = [g.title.japanese, g.title.pretty]
+      .map((t) => t?.trim())
+      .filter((t, i, all): t is string => !!t && t !== info.title && all.indexOf(t) === i);
+    if (altTitles.length) info.altTitles = altTitles;
+
+    const infoCells: InfoCell[] = [];
+    if (g.num_favorites && g.num_favorites > 0) {
+      infoCells.push({ label: "Favorites", value: String(g.num_favorites).replace(/\B(?=(\d{3})+$)/g, ",") });
+    }
+    const uploaded = isoDate(Number(g.upload_date));
+    if (uploaded) infoCells.push({ label: "Uploaded", value: uploaded });
+    if (infoCells.length) info.infoCells = infoCells;
 
     return info;
   }

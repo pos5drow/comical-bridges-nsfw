@@ -28,6 +28,7 @@ import {
   BridgeBase,
   type BridgeInfo,
   type Filter,
+  type InfoCell,
   type ListRequest,
   type Page,
   type PagedResults,
@@ -307,7 +308,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.3.1",
+    version: "0.3.2",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -1031,6 +1032,16 @@ class HitomiBridge extends BridgeBase {
     if (g.type) info.type = TYPE_LABELS[g.type] ?? g.type;
     if (g.files.length) info.pageCount = g.files.length;
 
+    const japanese = g.japanese_title?.trim();
+    if (japanese && japanese !== info.title) info.altTitles = [japanese];
+
+    const infoCells: InfoCell[] = [];
+    const published = g.datepublished?.slice(0, 10);
+    if (published) infoCells.push({ label: "Published", value: published });
+    const added = g.date?.slice(0, 10);
+    if (added) infoCells.push({ label: "Added", value: added });
+    if (infoCells.length) info.infoCells = infoCells;
+
     // Every language this work exists in (see HitomiLanguage) — this gallery's own included.
     const languages = new Set<string>();
     if (g.language_localname || g.language) languages.add(g.language_localname || g.language!);
@@ -1094,17 +1105,12 @@ class HitomiBridge extends BridgeBase {
   /** Hitomi has no synopsis, so compose the metadata the detail page can't show structurally. */
   private buildDescription(g: GalleryInfo): string | undefined {
     const lines: string[] = [];
-    if (g.japanese_title) lines.push(g.japanese_title);
     const parodys = (g.parodys ?? []).map((p) => p.parody).filter((n): n is string => !!n && n !== "original");
     if (parodys.length) lines.push(`Series: ${parodys.join(", ")}`);
     const characters = (g.characters ?? []).map((c) => c.character).filter((n): n is string => !!n);
     if (characters.length) lines.push(`Characters: ${characters.join(", ")}`);
     const groups = (g.groups ?? []).map((c) => c.group).filter((n): n is string => !!n);
     if (groups.length) lines.push(`Circle: ${groups.join(", ")}`);
-    const published = g.datepublished?.slice(0, 10);
-    if (published) lines.push(`Published: ${published}`);
-    const posted = g.date?.slice(0, 10);
-    if (posted) lines.push(`Added: ${posted}`);
     return lines.length ? lines.join("\n") : undefined;
   }
 

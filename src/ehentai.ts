@@ -20,6 +20,7 @@ import {
   type CardBadge,
   type Filter,
   type InferSettings,
+  type InfoCell,
   type ListRequest,
   type Page,
   type PageThumbnail,
@@ -105,7 +106,12 @@ interface GMetadata {
   category?: string;
   thumb?: string;
   uploader?: string;
+  /** Epoch seconds. */
+  posted?: string;
   filecount?: string;
+  /** Bytes, all pages together. */
+  filesize?: number;
+  /** Out of 5. */
   rating?: string;
   tags?: string[];
   error?: string;
@@ -399,11 +405,12 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.1",
+    version: "0.3.2",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "settings", "direct", "favorites"],
+    ratings: true,
     iconUrl: `${EH_BASE}/favicon.ico`,
     rateLimit: { maxConcurrent: 3, minIntervalMs: 500 },
     // Hosts whose assets this bridge serves via the host's `/img-proxy` (montage sprite sheets on
@@ -740,7 +747,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // The gallery category (Doujinshi / Manga / …) is its type, shown as the Type cell rather than a
     // lone genre chip (it's also painted as a card badge in list/search views).
     if (meta?.category) info.type = meta.category;
-    if (meta?.title_jpn) info.description = meta.title_jpn;
+    const japanese = meta?.title_jpn?.trim();
+    if (japanese && japanese !== info.title) info.altTitles = [japanese];
 
     if (meta?.tags?.length) {
       const byNs = groupTagsByNs(meta.tags);
@@ -773,6 +781,16 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
     const pageCount = meta?.filecount ? parseInt(meta.filecount, 10) : NaN;
     if (pageCount > 0) info.pageCount = pageCount;
+
+    // The API gives no vote count. Zero is a gallery nobody has rated: a vote is half a star at least.
+    const stars = meta?.rating ? parseFloat(meta.rating) : NaN;
+    if (stars > 0) info.rating = { score: Math.min(1, stars / 5) };
+
+    const infoCells: InfoCell[] = [];
+    const posted = isoDate(Number(meta?.posted));
+    if (posted) infoCells.push({ label: "Posted", value: posted });
+    if (meta?.filesize && meta.filesize > 0) infoCells.push({ label: "Size", value: formatBytes(meta.filesize) });
+    if (infoCells.length) info.infoCells = infoCells;
 
     return info;
   }
@@ -913,6 +931,25 @@ class EHentaiBridge extends BridgeBase<Settings> {
     console.error(`[e-hentai] resolvePage ${gidRef}: could not extract image URL`);
     throw new Error(`Could not extract image URL for page ${gidRef}`);
   }
+}
+
+/** Epoch seconds → "YYYY-MM-DD" in UTC, or nothing for a value that isn't a date. */
+function isoDate(epochSeconds: number): string | undefined {
+  if (!Number.isFinite(epochSeconds) || epochSeconds <= 0) return undefined;
+  const date = new Date(epochSeconds * 1000);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
+}
+
+/** 51210504 → "48.8 MB". */
+function formatBytes(bytes: number): string {
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${unit === 0 || value >= 100 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
 }
 
 /** "2875621:5e748ef5c5" → [2875621, "5e748ef5c5"] */
