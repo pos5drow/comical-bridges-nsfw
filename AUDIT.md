@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 30 KB (500×659) · sampled 8 · failed 0 · bytes min 20 KB / avg 30 KB / median 24 KB / max 48 KB · dims avg 500×659 (max 500×707) · aspect avg 0.79
+**7/10 capabilities** · cover 30 KB (500×653) · sampled 8 · failed 0 · bytes min 22 KB / avg 30 KB / median 27 KB / max 43 KB · dims avg 500×653 (max 500×714) · aspect avg 0.80
 
 > Cloudflare / IP-gated from datacenters
 
@@ -28,12 +28,12 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 50 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 134 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 23 KB (250×355) · sampled 8 · failed 0 · bytes min 16 KB / avg 23 KB / median 22 KB / max 37 KB · dims avg 250×355 (max 250×375) · aspect avg 0.71
+**6/6 capabilities** · cover 24 KB (250×314) · sampled 8 · failed 0 · bytes min 15 KB / avg 24 KB / median 23 KB / max 31 KB · dims avg 250×314 (max 250×375) · aspect avg 0.87
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -45,7 +45,7 @@ shows ⚠ even for a hard failure.
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: favorites require your e-hentai session cookies — on a logged-in browser open DevTools → Application → Cookies and paste ipb_member_id and ipb_pass_hash into this bridge's settings |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 62 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 59 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -53,10 +53,10 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 102 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 1934 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `hitomi` — ⚠ (13✓ 1⚠ 0✗)
+## `hitomi` — ✓ (13✓ 0⚠ 0✗)
 
 **5/8 capabilities** · cover — · sampled 0 · failed 8 · bytes min 0 KB / avg 0 KB / median 0 KB / max 0 KB
 
@@ -64,7 +64,6 @@ shows ⚠ even for a hard failure.
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
-| ⚠ | `read.details.description` | core | series details have no description |
 | ✓ | `info.capabilities` | core | declares 8 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 3 list(s) |
 | ✓ | `lists.items` | lists | list "popular-today" returned 24 item(s) |
@@ -76,7 +75,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 210 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 75 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-10-10 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-10-11 by the nightly live audit ([`audit.ts`](audit.ts))._
