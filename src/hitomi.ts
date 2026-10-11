@@ -98,10 +98,32 @@ const FTS_B = 16;
 
 // ── gg.js (image path table) ────────────────────────────────────────────────────
 
-/** Parsed gg.js: `b` base dir, plus the set of `g` cases that map to subdomain index 1 (else 0). */
+/**
+ * Parsed gg.js: `b` base dir, plus `gg.m(g)` as data — the switch's default `o` and the value each
+ * case assigns. The polarity is NOT fixed: hitomi rotates between `var o = 0` with cases setting 1 and
+ * `var o = 1` with cases setting 0, so assuming either one 404s most pages half the time.
+ */
 interface Gg {
   b: string;
-  cases: Set<number>;
+  def: number;
+  cases: Map<number, number>;
+}
+
+/** Parse gg.js. Exported for tests. */
+export function parseGg(text: string): Gg {
+  const b = text.match(/b:\s*'([^']+)'/)?.[1] ?? "";
+  const def = Number(text.match(/var\s+o\s*=\s*(\d+)/)?.[1] ?? 0);
+  // Walk the switch in order: each run of `case N:` labels falls through to the next `o = V`.
+  const cases = new Map<number, number>();
+  let pending: number[] = [];
+  for (const m of text.matchAll(/case\s+(\d+):|\bo\s*=\s*(\d+)\s*;/g)) {
+    if (m[1] !== undefined) pending.push(parseInt(m[1], 10));
+    else {
+      for (const g of pending) cases.set(g, parseInt(m[2]!, 10));
+      pending = [];
+    }
+  }
+  return { b, def, cases };
 }
 
 // ── Gallery info DTOs (galleries/{id}.js) ───────────────────────────────────────
@@ -308,7 +330,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.3.2",
+    version: "0.3.3",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -378,11 +400,7 @@ class HitomiBridge extends BridgeBase {
   private async getGg(): Promise<Gg> {
     const GG_TTL_MS = 3 * 60 * 1000;
     if (this.gg && Date.now() - this.gg.at < GG_TTL_MS) return this.gg.value;
-    const text = await this.fetchText(`${LTN}/gg.js`, this.headers());
-    const b = text.match(/b:\s*'([^']+)'/)?.[1] ?? "";
-    const cases = new Set<number>();
-    for (const m of text.matchAll(/case\s+(\d+):/g)) cases.add(parseInt(m[1]!, 10));
-    const value: Gg = { b, cases };
+    const value = parseGg(await this.fetchText(`${LTN}/gg.js`, this.headers()));
     this.gg = { at: Date.now(), value };
     return value;
   }
@@ -392,7 +410,8 @@ class HitomiBridge extends BridgeBase {
     // s(hash): parseInt(lastChar + previousTwo, 16) — both the path key and the subdomain selector.
     const m = /(..)(.)$/.exec(hash)!;
     const g = parseInt(m[2]! + m[1]!, 16);
-    const sub = (ext === "webp" ? "w" : "a") + (1 + (gg.cases.has(g) ? 1 : 0));
+    // subdomain_from_url: `w`/`a` + (1 + gg.m(g)).
+    const sub = (ext === "webp" ? "w" : "a") + (1 + (gg.cases.get(g) ?? gg.def));
     return `https://${sub}.${D2}/${gg.b}${g}/${hash}.${ext}`;
   }
 
