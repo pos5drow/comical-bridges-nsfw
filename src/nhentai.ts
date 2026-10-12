@@ -201,7 +201,7 @@ const LISTS: ReadonlyArray<ListDef> = [
   // nhentai's homepage "Popular Now" feed. NOTE: distinct from the `popular-today` *sort* option
   // below (search?sort=popular-today) — `galleries/popular` is the live homepage rail and matches
   // the site's "Popular Now" section exactly.
-  { id: "popular-now", name: "Popular Now", layout: "grid", featured: true, path: "galleries/popular", paginated: false },
+  { id: "popular-now", name: "Popular Now", layout: "hero", featured: true, path: "galleries/popular", paginated: false },
   { id: "new", name: "New Arrivals", layout: "grid", featured: true, path: "galleries", paginated: true },
 ];
 
@@ -218,7 +218,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.3",
+    version: "0.2.4",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
