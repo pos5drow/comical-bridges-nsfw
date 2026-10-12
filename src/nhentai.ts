@@ -80,6 +80,8 @@ interface GalleryListItem {
   japanese_title?: string;
   /** Relative CDN path, e.g. "galleries/3979254/thumb.webp". Prefix with thumb server. */
   thumbnail?: string;
+  thumbnail_width?: number;
+  thumbnail_height?: number;
   num_pages?: number;
   tag_ids?: number[];
 }
@@ -171,6 +173,12 @@ function languageBadges(tagIds: number[] | undefined): CardBadge[] {
   return [];
 }
 
+/** A cover's width / height from the dimensions the API already sends with it — undefined when
+ *  either is missing or zero, so a gallery without them simply carries no shape. */
+function aspectOf(width?: number, height?: number): number | undefined {
+  return width && height && width > 0 && height > 0 ? width / height : undefined;
+}
+
 /** Prefix a relative CDN path with its server origin. */
 function cdnUrl(relativePath: string, server: string): string {
   return `${server}/${relativePath}`;
@@ -218,7 +226,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.4",
+    version: "0.2.5",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -334,7 +342,11 @@ class NhentaiBridge extends BridgeBase<Settings> {
       id: String(item.id),
       title: listItemTitle(item),
     };
-    if (item.thumbnail) entry.thumbnailUrl = cdnUrl(item.thumbnail, thumb);
+    if (item.thumbnail) {
+      entry.thumbnailUrl = cdnUrl(item.thumbnail, thumb);
+      const aspect = aspectOf(item.thumbnail_width, item.thumbnail_height);
+      if (aspect !== undefined) entry.thumbnailAspect = aspect;
+    }
     const badges = languageBadges(item.tag_ids);
     if (badges.length) entry.badges = badges;
     return entry;
@@ -537,8 +549,12 @@ class NhentaiBridge extends BridgeBase<Settings> {
       shareUrl: `https://nhentai.net/g/${seriesId}/`,
     };
 
-    const coverPath = g.cover?.path ?? g.thumbnail?.path;
-    if (coverPath) info.thumbnailUrl = cdnUrl(coverPath, thumb);
+    const cover = g.cover?.path ? g.cover : g.thumbnail;
+    if (cover?.path) {
+      info.thumbnailUrl = cdnUrl(cover.path, thumb);
+      const aspect = aspectOf(cover.width, cover.height);
+      if (aspect !== undefined) info.thumbnailAspect = aspect;
+    }
 
     const byType = new Map<string, string[]>();
     const idByType = new Map<string, string[]>();

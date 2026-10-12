@@ -313,6 +313,27 @@ function normalizeThumbUrl(url: string): string {
   return url.replace(/^https?:\/\/s\.exhentai\.org\/t\//, "https://ehgt.org/");
 }
 
+/**
+ * Each listing thumbnail's shape (width / height), keyed by its normalized URL. The listing draws
+ * every cover with an inline `style="height:Hpx;width:Wpx"` sized to the picture, and that URL is
+ * the very `thumb` gdata returns, so the shape comes free with HTML already in hand. A display mode
+ * that doesn't size its images inline simply yields nothing, and its covers carry no shape.
+ */
+function thumbAspectsFromHtml(html: string): Map<string, number> {
+  const aspects = new Map<string, number>();
+  for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
+    const size = /style="[^"]*\bheight:\s*(\d+)px;\s*width:\s*(\d+)px/.exec(tag);
+    if (!size) continue;
+    const height = Number(size[1]);
+    const width = Number(size[2]);
+    if (!(width > 0 && height > 0)) continue;
+    // Lazy-loaded rows carry a 1px placeholder in `src` and the real picture in `data-src`.
+    const url = /\bdata-src="(https?:[^"]+)"/.exec(tag)?.[1] ?? /\bsrc="(https?:[^"]+)"/.exec(tag)?.[1];
+    if (url) aspects.set(normalizeThumbUrl(url), width / height);
+  }
+  return aspects;
+}
+
 /** Strip the _250 size suffix for a full-resolution cover (used on the detail page only). */
 function fullSizeThumbUrl(url: string): string {
   return normalizeThumbUrl(url).replace(/_250\.(\w+)$/, ".$1");
@@ -405,7 +426,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.3",
+    version: "0.3.4",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -599,6 +620,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       }
     }
 
+    const thumbAspects = thumbAspectsFromHtml(html);
     const items: SeriesEntry[] = pairs.map(({ gid, token }): SeriesEntry => {
       const id = `${gid}:${token}`;
       const meta = metaById.get(id);
@@ -606,7 +628,11 @@ class EHentaiBridge extends BridgeBase<Settings> {
       // thumbnail and remain viewable — only a genuine API error means there's no data to show.
       if (!meta || meta.error) return { id, title: id };
       const entry: SeriesEntry = { id, title: meta.title ?? id };
-      if (meta.thumb) entry.thumbnailUrl = normalizeThumbUrl(meta.thumb);
+      if (meta.thumb) {
+        entry.thumbnailUrl = normalizeThumbUrl(meta.thumb);
+        const aspect = thumbAspects.get(entry.thumbnailUrl);
+        if (aspect !== undefined) entry.thumbnailAspect = aspect;
+      }
       const badges = cardBadges(meta);
       if (badges.length) entry.badges = badges;
       return entry;
