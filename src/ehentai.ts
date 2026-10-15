@@ -455,7 +455,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.5",
+    version: "0.3.6",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -466,7 +466,9 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // full speed, so pages (the /s/ viewer HTML) go one at a time, and the images they point at are
     // paced to match.
     rateLimit: { maxConcurrent: 1, minIntervalMs: 3000 },
-    assetRateLimit: { maxConcurrent: 2, minIntervalMs: 3000 },
+    // The thumbnail CDN isn't what gets an IP banned (the viewer pages and H@H images are), so
+    // proxied thumbnails aren't held to the page pacing.
+    assetRateLimit: { maxConcurrent: 2, minIntervalMs: 3000, byHost: [{ hosts: ["ehgt.org"] }] },
     // Hosts whose assets this bridge serves via the host's `/img-proxy` (montage sprite sheets on
     // the H@H network; the CDN thumbnail hosts are covered too though covers load direct today).
     // The host derives its proxy allowlist from this — it hardcodes no source hostnames. The Referer

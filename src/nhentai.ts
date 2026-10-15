@@ -226,13 +226,30 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.6",
+    version: "0.2.7",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort", "settings", "favorites", "direct", "exclude-tags", "resolve-tags", "related-series"],
     iconUrl: "https://nhentai.net/favicon.png",
-    rateLimit: { maxConcurrent: 1, minIntervalMs: 700 },
+    rateLimit: {
+      maxConcurrent: 1,
+      minIntervalMs: 700,
+      // The API budgets each endpoint per minute (its OpenAPI spec lists the anonymous per-IP
+      // limits); a saturated one answers 429 and must not stall the others. Specific routes first.
+      routes: [
+        { match: "/api/v2/search", limit: 10, windowMs: 60_000 },
+        { match: "/api/v2/galleries/popular", limit: 8, windowMs: 60_000 },
+        { match: "/api/v2/galleries", limit: 15, windowMs: 60_000 },
+        { match: "/api/v2/galleries/*/related", limit: 12, windowMs: 60_000 },
+        { match: "/api/v2/galleries/*/favorite", limit: 15, windowMs: 60_000 },
+        { match: "/api/v2/galleries/*", limit: 20, windowMs: 60_000 },
+        { match: "/api/v2/favorites", limit: 15, windowMs: 60_000 },
+        { match: "/api/v2/tags/ids", limit: 15, windowMs: 60_000 },
+        { match: "/api/v2/tags/search", limit: 30, windowMs: 60_000 },
+        { match: "/api/v2/tags/**", limit: 15, windowMs: 60_000 },
+      ],
+    },
     // Paces a chapter download's page fetches; the reader's own loads aren't held to it.
     assetRateLimit: { maxConcurrent: 3, minIntervalMs: 250 },
   };

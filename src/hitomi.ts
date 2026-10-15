@@ -361,7 +361,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.4.1",
+    version: "0.4.2",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -384,7 +384,9 @@ class HitomiBridge extends BridgeBase {
     // Every image (covers + pages) is served through the host's /img-proxy with the required Referer.
     assetProxy: { hosts: [D2], referer: REFERER },
     // A chapter download pulls every page through the proxy; the CDN answers a burst with 503s.
-    assetRateLimit: { maxConcurrent: 3, minIntervalMs: 300 },
+    // Covers come off the thumbnail host, which takes a grid's worth at once — they'd otherwise
+    // queue behind page images for seconds.
+    assetRateLimit: { maxConcurrent: 3, minIntervalMs: 300, byHost: [{ hosts: [`tn.${D2}`] }] },
   };
 
   private gg: { at: number; value: Gg } | undefined;
