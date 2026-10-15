@@ -28,6 +28,8 @@ import {
   BridgeBase,
   type BridgeInfo,
   type Filter,
+  type HttpRequest,
+  type HttpResponse,
   type InfoCell,
   type ListRequest,
   type Page,
@@ -47,6 +49,8 @@ import {
   encodeCursor,
   pageFromCursor,
   parseFilterIncludeExclude,
+  rateLimitedMessage,
+  retryAfterMs,
 } from "@comical/sdk";
 import { LANGUAGES } from "./hitomi/languages.ts";
 import {
@@ -70,6 +74,7 @@ const TN = `https://tn.${D2}`;
 const TAGINDEX = "https://tagindex.hitomi.la";
 const REFERER = `${SITE}/`;
 const PER_PAGE = 24;
+const THROTTLE_WAIT_MS = 30_000;
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 const REDACTED_TITLE = "Hidden";
@@ -356,7 +361,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.4.0",
+    version: "0.4.1",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -378,6 +383,8 @@ class HitomiBridge extends BridgeBase {
     rateLimit: { maxConcurrent: 5, minIntervalMs: 120 },
     // Every image (covers + pages) is served through the host's /img-proxy with the required Referer.
     assetProxy: { hosts: [D2], referer: REFERER },
+    // A chapter download pulls every page through the proxy; the CDN answers a burst with 503s.
+    assetRateLimit: { maxConcurrent: 3, minIntervalMs: 300 },
   };
 
   private gg: { at: number; value: Gg } | undefined;
@@ -392,6 +399,15 @@ class HitomiBridge extends BridgeBase {
 
   private headers(): Record<string, string> {
     return { "User-Agent": UA, Referer: REFERER };
+  }
+
+  /** The CDN sheds load with a bare 503, never a 429 or a Retry-After, so a 503 here is a throttle. */
+  protected override async request(req: HttpRequest): Promise<HttpResponse> {
+    const res = await super.request(req);
+    if (res.status === 503 || res.status === 429) {
+      throw new Error(rateLimitedMessage(retryAfterMs(res.headers) ?? THROTTLE_WAIT_MS, `HTTP ${res.status} from the CDN`));
+    }
+    return res;
   }
 
   // ── /img-proxy URL builder ─────────────────────────────────────────────────

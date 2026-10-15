@@ -226,13 +226,15 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.5",
+    version: "0.2.6",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort", "settings", "favorites", "direct", "exclude-tags", "resolve-tags", "related-series"],
     iconUrl: "https://nhentai.net/favicon.png",
     rateLimit: { maxConcurrent: 1, minIntervalMs: 700 },
+    // Paces a chapter download's page fetches; the reader's own loads aren't held to it.
+    assetRateLimit: { maxConcurrent: 3, minIntervalMs: 250 },
   };
 
   private cdnImageServer: string | undefined;

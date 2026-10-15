@@ -38,6 +38,7 @@ import {
   defineBridge,
   defineSettings,
   encodeCursor,
+  rateLimitedMessage,
 } from "@comical/sdk";
 
 const EH_BASE = "https://e-hentai.org";
@@ -178,6 +179,34 @@ function extractImageUrl(fragment: string): string | undefined {
     fragment.match(/id="img"\s+src="([^"]+)"/)?.[1] ??
     fragment.match(/src="([^"]+)"\s[^>]*id="img"/)?.[1]
   );
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+/** The site states the ban's length; this covers a page that doesn't. */
+const DEFAULT_BAN_MS = 3 * HOUR_MS;
+/** The image quota regenerates continuously; an hour buys back a useful amount of it. */
+const QUOTA_WAIT_MS = HOUR_MS;
+
+/**
+ * The rate-limited error for a page that is the site refusing us rather than content: the IP-ban
+ * notice it serves (with a 200) in place of any page, or the quota-exceeded placeholder it puts in
+ * a viewer page's image slot. Hosts hold this bridge until the stated wait instead of hammering a
+ * ban into a longer one.
+ */
+export function sourceRefusal(html: string, imageUrl?: string): Error | undefined {
+  if (imageUrl && /\/509s?\.gif(?:$|\?)/.test(imageUrl)) {
+    return new Error(rateLimitedMessage(QUOTA_WAIT_MS, "image quota exceeded"));
+  }
+  // The notice is a bare sentence or two; a real page that merely mentions a ban (a comment, a
+  // title) is far longer.
+  if (html.length > 2000 || !/temporarily banned/i.test(html)) return undefined;
+  const expires = html.match(/ban expires in ([^.<]+)/i)?.[1] ?? "";
+  const units: Record<string, number> = { day: 24 * HOUR_MS, hour: HOUR_MS, minute: 60_000, second: 1000 };
+  let ms = 0;
+  for (const [, n, unit] of expires.matchAll(/(\d+)\s*(day|hour|minute|second)s?/gi)) {
+    ms += Number(n) * units[unit!.toLowerCase()]!;
+  }
+  return new Error(rateLimitedMessage(ms > 0 ? ms : DEFAULT_BAN_MS, "IP temporarily banned"));
 }
 
 /** Extract { hash, pageNum } pairs from a gallery viewer page. */
@@ -426,14 +455,18 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.4",
+    version: "0.3.5",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "settings", "direct", "favorites"],
     ratings: true,
     iconUrl: `${EH_BASE}/favicon.ico`,
-    rateLimit: { maxConcurrent: 3, minIntervalMs: 500 },
+    // The site bans IPs for page-load bursts well short of what a reader or a download produces at
+    // full speed, so pages (the /s/ viewer HTML) go one at a time, and the images they point at are
+    // paced to match.
+    rateLimit: { maxConcurrent: 1, minIntervalMs: 3000 },
+    assetRateLimit: { maxConcurrent: 2, minIntervalMs: 3000 },
     // Hosts whose assets this bridge serves via the host's `/img-proxy` (montage sprite sheets on
     // the H@H network; the CDN thumbnail hosts are covered too though covers load direct today).
     // The host derives its proxy allowlist from this — it hardcodes no source hostnames. The Referer
@@ -470,6 +503,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
   private async getHtml(url: string): Promise<string> {
     const res = await this.request({ url, method: "GET", headers: this.headers(true) });
     if (res.status >= 400) throw new Error(`HTTP ${res.status} fetching ${url}`);
+    const refusal = sourceRefusal(res.body);
+    if (refusal) throw refusal;
     return res.body;
   }
 
@@ -481,6 +516,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
       body: JSON.stringify(body),
     });
     if (res.status >= 400) throw new Error(`HTTP ${res.status} from API`);
+    const refusal = sourceRefusal(res.body);
+    if (refusal) throw refusal;
     return JSON.parse(res.body) as T;
   }
 
@@ -945,6 +982,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
     const pageUrl = `${this.base()}/s/${hash}/${gidRef}`;
     const pageHtml = await this.getHtml(pageUrl);
     const imageUrl = extractImageUrl(pageHtml);
+    const refusal = sourceRefusal(pageHtml, imageUrl);
+    if (refusal) throw refusal;
     if (imageUrl) return imageUrl;
     // Image URL missing — CDN assignment may have expired; retry with nl token if present
     const nlMatch = pageHtml.match(/return nl\('([^']+)'\)/);
@@ -952,6 +991,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
       console.log(`[e-hentai] resolvePage ${gidRef}: image URL missing, retrying with nl token`);
       const retryHtml = await this.getHtml(`${pageUrl}?nl=${encodeURIComponent(nlMatch[1]!)}`);
       const retryUrl = extractImageUrl(retryHtml);
+      const retryRefusal = sourceRefusal(retryHtml, retryUrl);
+      if (retryRefusal) throw retryRefusal;
       if (retryUrl) return retryUrl;
     }
     console.error(`[e-hentai] resolvePage ${gidRef}: could not extract image URL`);
