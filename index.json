@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-10-12T05:48:32.804Z",
+  "updated": "2026-10-15T07:55:30.477Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -37,7 +37,7 @@
     {
       "id": "pos5drow.hitomi",
       "name": "Hitomi.la",
-      "version": "0.3.4",
+      "version": "0.4.0",
       "contractVersion": "2.0.0",
       "languages": [
         "multi"
@@ -53,8 +53,8 @@
         "exclude-tags",
         "resolve-tags"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hitomi/0.3.4/bridge.js",
-      "sha256": "a4c58e73469bbf6ab8bd6a6b6f622ab41cfb966d2a4561405151dee9482406fb",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hitomi/0.4.0/bridge.js",
+      "sha256": "b6ba308ebb3a46b279ba3b19bd4303b98f184ff79addcfb281cd6f2622d6294f",
       "iconUrl": "https://ltn.gold-usergeneratedcontent.net/favicon-192x192.png",
       "assetProxy": {
         "hosts": [
@@ -63,7 +63,7 @@
         "referer": "https://hitomi.la/"
       },
       "cardSubtitles": true,
-      "signature": "8PBrIUUD82EWVCTSAka1_aLGaqxVlMkP4njRQI8K1OPC26zyJgxhazKQ-oI2KJ-nr4XU42OCi4NKiKZlxZzBCg"
+      "signature": "JepSVe09Dofglc4X0jsI9Gv09Dj0iyR6nXnZhovYmtrv-dxsThwOOH7x3c2bE_PEzM1fb6Zt4xTpaqqkRblPAA"
     },
     {
       "id": "pos5drow.nhentai",
