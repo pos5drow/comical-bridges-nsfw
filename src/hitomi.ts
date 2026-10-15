@@ -42,8 +42,9 @@ import {
   type TagGroup,
   abbreviateLanguage,
   base64ToBytes,
+  decodeCursor,
   defineBridge,
-  nextPageCursor,
+  encodeCursor,
   pageFromCursor,
   parseFilterIncludeExclude,
 } from "@comical/sdk";
@@ -194,7 +195,7 @@ const TYPE_LABELS: Record<string, string> = Object.fromEntries(TYPES.map((t) => 
 
 /** Sort keys, each a nozomi ordering. Unlike an "area", an ordering composes with any tag. */
 const SORTS: ReadonlyArray<{ key: string; label: string; state: SortState }> = [
-  { key: "latest", label: "Latest", state: { orderby: "date", orderbykey: "added", direction: "desc" } },
+  { key: "latest", label: "Date Added", state: { orderby: "date", orderbykey: "added", direction: "desc" } },
   { key: "published", label: "Date Published", state: { orderby: "date", orderbykey: "published", direction: "desc" } },
   { key: "popular-today", label: "Popular Today", state: { orderby: "popular", orderbykey: "today", direction: "desc" } },
   { key: "popular-week", label: "Popular This Week", state: { orderby: "popular", orderbykey: "week", direction: "desc" } },
@@ -205,12 +206,37 @@ const SORTS: ReadonlyArray<{ key: string; label: string; state: SortState }> = [
 
 interface ListDef extends SeriesList {
   sort: string;
+  /** Cards per page, when not `PER_PAGE`. */
+  perPage?: number;
 }
 
+/**
+ * Home fetches page 1 of every rail at once and each card is its own galleryblock request, so a
+ * rail asks for only what a preview row shows. Its "see all" still pages through the whole ordering.
+ */
+const RAIL_PER_PAGE = 12;
+
+/**
+ * Home is composed from the non-`page` lists, in order; each `page` list is a top-level page of its
+ * own. A rail and the page it previews are separate ids reading the same ordering, so the rail can
+ * keep its smaller page size.
+ */
 const LISTS: ReadonlyArray<ListDef> = [
-  { id: "popular-today", name: "Popular Today", layout: "grid", featured: true, sort: "popular-today" },
-  { id: "popular-week", name: "Popular This Week", layout: "grid", featured: true, sort: "popular-week" },
-  { id: "latest", name: "Latest", layout: "grid", featured: true, sort: "latest" },
+  // `featured` is the one rail the aggregate Comical home shows for this bridge.
+  { id: "home-popular-today", name: "Popular Today", layout: "hero", featured: true, sort: "popular-today", perPage: RAIL_PER_PAGE },
+  { id: "home-popular-week", name: "Popular This Week", layout: "carousel", sort: "popular-week", perPage: RAIL_PER_PAGE },
+  { id: "home-popular-month", name: "Popular This Month", layout: "carousel", sort: "popular-month", perPage: RAIL_PER_PAGE },
+  { id: "home-popular-year", name: "Popular This Year", layout: "carousel", sort: "popular-year", perPage: RAIL_PER_PAGE },
+  // Last, so it owns Home's infinite scroll.
+  { id: "home-latest", name: "Date Added", layout: "grid", sort: "latest" },
+
+  { id: "latest", name: "Date Added", layout: "grid", page: true, sort: "latest" },
+  { id: "published", name: "Date Published", layout: "grid", page: true, sort: "published" },
+  { id: "popular-today", name: "Popular Today", layout: "grid", page: true, sort: "popular-today" },
+  { id: "popular-week", name: "Popular Week", layout: "grid", page: true, sort: "popular-week" },
+  { id: "popular-month", name: "Popular Month", layout: "grid", page: true, sort: "popular-month" },
+  { id: "popular-year", name: "Popular Year", layout: "grid", page: true, sort: "popular-year" },
+  { id: "random", name: "Random", layout: "grid", page: true, sort: "random" },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────────
@@ -330,7 +356,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.3.4",
+    version: "0.4.0",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -810,13 +836,19 @@ class HitomiBridge extends BridgeBase {
    * each, cached and reused when the page is built), remembering its progress per query signature so
    * paging forward doesn't rescan.
    */
-  private async collect(q: ParsedQuery, plan: Resolved, page: number): Promise<{ ids: number[]; hasNext: boolean }> {
-    const sig = querySignature(q);
+  private async collect(
+    q: ParsedQuery,
+    plan: Resolved,
+    page: number,
+    perPage: number,
+    seed: number | undefined,
+  ): Promise<{ ids: number[]; hasNext: boolean }> {
+    const sig = seed === undefined ? querySignature(q) : `${querySignature(q)}~${seed}`;
     const total = this.sourceTotal(plan.base);
 
     if (plan.simple) {
-      const offset = (page - 1) * PER_PAGE;
-      const ids = await this.readWindow(plan.base, offset, PER_PAGE, q, sig);
+      const offset = (page - 1) * perPage;
+      const ids = await this.readWindow(plan.base, offset, perPage, q, sig);
       // `random` never runs out: every page is a fresh window into the same index.
       const hasNext = q.sort.direction === "random" ? ids.length > 0 : offset + ids.length < total;
       return { ids, hasNext };
@@ -824,6 +856,9 @@ class HitomiBridge extends BridgeBase {
 
     let scan = this.scans.get(sig);
     if (!scan || Date.now() - scan.at > SCAN_TTL_MS) {
+      // Every fresh `random` walk has a signature of its own, so expired scans are swept here rather
+      // than only ever being replaced under the same key.
+      for (const [key, s] of this.scans) if (Date.now() - s.at > SCAN_TTL_MS) this.scans.delete(key);
       scan = { at: Date.now(), ids: [], seen: new Set(), scanned: 0 };
       this.scans.set(sig, scan);
     }
@@ -836,7 +871,7 @@ class HitomiBridge extends BridgeBase {
       scan!.ids.push(id);
     };
 
-    const need = page * PER_PAGE;
+    const need = page * perPage;
     const needsCards = plan.lateInclude.length > 0 || plan.lateExclude.length > 0;
     let cardsFetched = 0;
 
@@ -870,17 +905,34 @@ class HitomiBridge extends BridgeBase {
     }
     scan.at = Date.now();
 
-    const start = (page - 1) * PER_PAGE;
-    const ids = scan.ids.slice(start, start + PER_PAGE);
-    const hasNext = scan.ids.length > start + PER_PAGE || scan.scanned < total;
+    const start = (page - 1) * perPage;
+    const ids = scan.ids.slice(start, start + perPage);
+    const hasNext = scan.ids.length > start + perPage || scan.scanned < total;
     return { ids, hasNext };
   }
 
-  /** Resolve → collect → cards. The single entry point behind both search and list browsing. */
-  private async run(q: ParsedQuery, page: number, excluded: Set<string> | undefined): Promise<PagedResults<SeriesEntry>> {
+  /**
+   * Resolve → collect → cards. The single entry point behind both search and list browsing.
+   *
+   * A `random` ordering is seeded per walk: page 1 (no cursor) draws a fresh seed, so reopening or
+   * refreshing reshuffles, and the seed rides in the cursor so later pages continue the same shuffle.
+   */
+  private async run(
+    q: ParsedQuery,
+    cursor: string | undefined,
+    excluded: Set<string> | undefined,
+    perPage = PER_PAGE,
+  ): Promise<PagedResults<SeriesEntry>> {
+    const page = pageFromCursor(cursor);
+    let seed: number | undefined;
+    if (q.sort.direction === "random") {
+      const carried = decodeCursor<{ seed?: unknown }>(cursor)?.seed;
+      seed = typeof carried === "number" ? carried : Math.floor(Math.random() * 2 ** 32);
+    }
     const plan = await this.plan(q);
-    const { ids, hasNext } = await this.collect(q, plan, page);
-    return { items: await this.idsToEntries(ids, excluded), nextCursor: nextPageCursor(page, hasNext) };
+    const { ids, hasNext } = await this.collect(q, plan, page, perPage, seed);
+    const nextCursor = hasNext ? encodeCursor(seed === undefined ? { page: page + 1 } : { page: page + 1, seed }) : undefined;
+    return { items: await this.idsToEntries(ids, excluded), ...(nextCursor ? { nextCursor } : {}) };
   }
 
   // ── Filters / sort ───────────────────────────────────────────────────────────
@@ -969,7 +1021,7 @@ class HitomiBridge extends BridgeBase {
   // ── Lists ──────────────────────────────────────────────────────────────────
 
   async getLists(): Promise<SeriesList[]> {
-    return LISTS.map(({ sort: _s, ...list }) => list);
+    return LISTS.map(({ sort: _s, perPage: _p, ...list }) => list);
   }
 
   async getListItems(listId: string, req: ListRequest = {}): Promise<PagedResults<SeriesEntry>> {
@@ -981,8 +1033,7 @@ class HitomiBridge extends BridgeBase {
     const q = parseQuery(req.query ?? "");
     q.sort = { ...(SORTS.find((s) => s.key === list.sort)?.state ?? DEFAULT_SORT) };
     this.applyFilters(q, req);
-    // The scan engine works in pages over its own index, so a plain page cursor is the right token.
-    return this.run(q, pageFromCursor(req.cursor), this.excludedSet(req));
+    return this.run(q, req.cursor, this.excludedSet(req), list.perPage);
   }
 
   // ── Search ─────────────────────────────────────────────────────────────────
@@ -990,7 +1041,7 @@ class HitomiBridge extends BridgeBase {
   async getSearchResults(req: SearchRequest): Promise<PagedResults<SeriesEntry>> {
     const q = parseQuery(req.text);
     this.applyFilters(q, req);
-    return this.run(q, pageFromCursor(req.cursor), this.excludedSet(req));
+    return this.run(q, req.cursor, this.excludedSet(req));
   }
 
   // ── Tags ───────────────────────────────────────────────────────────────────
