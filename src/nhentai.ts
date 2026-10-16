@@ -226,7 +226,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.8",
+    version: "0.2.9",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -580,12 +580,14 @@ class NhentaiBridge extends BridgeBase<Settings> {
     for (const tag of g.tags ?? []) {
       if (!byType.has(tag.type)) { byType.set(tag.type, []); idByType.set(tag.type, []); }
       byType.get(tag.type)!.push(tag.name);
-      idByType.get(tag.type)!.push(String(tag.id));
-      this.tagNames.set(String(tag.id), tag.name);
+      // A missing id must stay empty (not the string "null") so the every(Boolean) check below
+      // can see it and the group falls back to queries instead of filtering by a bogus id.
+      const id = tag.id == null ? "" : String(tag.id);
+      idByType.get(tag.type)!.push(id);
+      if (id) this.tagNames.set(id, tag.name);
     }
 
     const artists = byType.get("artist") ?? [];
-    const groups = byType.get("group") ?? [];
     // Authors are artists ONLY. A group is a distinct credit type on nhentai, so never fall back
     // to it here — otherwise a group-only gallery shows the group as its "author", and tapping that
     // author searches `artist:"<group>"` (see getSearchResults), which is the wrong axis and matches
@@ -604,29 +606,32 @@ class NhentaiBridge extends BridgeBase<Settings> {
 
     const tagGroups: TagGroup[] = [];
 
+    // A chip is only tappable when its group carries `tagIds` (host selects the tag filter) or
+    // `tagQueries` (host runs that free-text search); a group with bare names renders dead chips.
+    // Content tags have filterable ids. Every OTHER nhentai tag type maps to a search-box prefix
+    // (`character:"…"`, `parody:"…"`, `group:"…"`, `language:…` — all verified against
+    // /api/v2/search), and getSearchResults passes free text straight through, so each of those
+    // groups gets a `tagQueries` entry per chip. A bare name would be wrong here: it matches
+    // titles/artists/tags as free text instead of the one axis the chip names.
     const contentTags = byType.get("tag");
     const contentTagIds = idByType.get("tag");
     if (contentTags?.length) {
       const group: TagGroup = { label: "Tags", kind: "theme", tags: contentTags };
       if (contentTagIds?.every(Boolean)) group.tagIds = contentTagIds;
+      // Fallback so a tag chip is never dead if an id is ever missing from the payload.
+      else group.tagQueries = contentTags.map((name) => `tag:"${name}"`);
       tagGroups.push(group);
     }
 
-    const characters = byType.get("character");
-    if (characters?.length) tagGroups.push({ label: "Characters", tags: characters });
-
-    const parodies = byType.get("parody");
-    if (parodies?.length) tagGroups.push({ label: "Parodies", tags: parodies });
-
-    // Groups are searchable as groups: nhentai's search box understands `group:"…"`, and
-    // getSearchResults passes a free-text query straight through — so a `tagQueries` entry makes a
-    // group chip run the right query (not a bare name that would match artists/tags/free text).
-    if (groups.length) {
-      tagGroups.push({ label: "Groups", tags: groups, tagQueries: groups.map((name) => `group:"${name}"`) });
-    }
-
-    const languages = byType.get("language");
-    if (languages?.length) tagGroups.push({ label: "Languages", tags: languages });
+    const prefixed = (label: string, type: string, prefix: string): void => {
+      const names = byType.get(type);
+      if (names?.length) tagGroups.push({ label, tags: names, tagQueries: names.map((name) => `${prefix}:"${name}"`) });
+    };
+    prefixed("Characters", "character", "character");
+    prefixed("Parodies", "parody", "parody");
+    // Groups are a distinct credit type (see the author note above), never folded into authors.
+    prefixed("Groups", "group", "group");
+    prefixed("Languages", "language", "language");
 
     if (tagGroups.length) info.tagGroups = tagGroups;
 
