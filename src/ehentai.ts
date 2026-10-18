@@ -216,6 +216,15 @@ export function sourceRefusal(html: string, imageUrl?: string): Error | undefine
 /** gdata's per-gallery answer for an id/token pair it doesn't know — a deleted gallery, or a bad token. */
 const UNKNOWN_GALLERY = /key missing|incorrect key/i;
 
+/** e-hentai.org's notice for a gallery it won't show this visitor. Not proof it's gone: ExHentai-only
+ *  galleries get it too, so it's the cue to ask ExHentai rather than to give up (see `galleryHtml`). */
+const UNAVAILABLE_GALLERY = /This gallery has been removed or is unavailable/i;
+
+const EX_ONLY_SIGNED_OUT =
+  "this gallery is only available on ExHentai — paste your e-hentai session cookies " +
+  "(ipb_member_id and ipb_pass_hash) into this bridge's settings to read it";
+const EX_NO_ACCESS = "this gallery is only available on ExHentai, and your account doesn't have ExHentai access";
+
 /**
  * The series-gone error for a gallery page that is the site saying the gallery doesn't exist: its
  * bare "Key missing, or incorrect key provided." body, or a copyright takedown notice. The generic
@@ -473,11 +482,13 @@ class EHentaiBridge extends BridgeBase<Settings> {
   private readonly hashCachePending = new Map<string, Promise<Map<number, string>>>();
   // Cache for viewer-page sprite thumbnails: same key as hashCache.
   private readonly thumbCache = new Map<string, Map<number, SpriteTile>>();
+  // Galleries e-hentai.org hides that ExHentai serves, so every later page of one goes there too.
+  private readonly exOnly = new Set<number>();
 
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.8",
+    version: "0.3.9",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -526,10 +537,27 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
   private async getHtml(url: string): Promise<string> {
     const res = await this.request({ url, method: "GET", headers: this.headers(true) });
-    if (res.status >= 400) throw new Error(`HTTP ${res.status} fetching ${url}`);
-    const refusal = sourceRefusal(res.body);
-    if (refusal) throw refusal;
-    return res.body;
+    return htmlBody(url, res.status, res.body);
+  }
+
+  /**
+   * A page of one gallery (`/mpv/`, `/g/`, `/s/`), from ExHentai when e-hentai.org hides it. That
+   * switch is taken whatever the `exhentai` setting says — a signed-in user who browses e-hentai.org
+   * still expects a gallery in their library to open — and is remembered per gallery, since the
+   * reader resolves its pages one request at a time.
+   */
+  private async galleryHtml(gid: number, path: string): Promise<string> {
+    const base = this.exOnly.has(gid) ? EX_BASE : this.base();
+    const url = base + path;
+    const res = await this.request({ url, method: "GET", headers: this.headers(true) });
+    if (base === EH_BASE && res.body.length < 10_000 && UNAVAILABLE_GALLERY.test(res.body)) {
+      if (!this.signedIn()) throw new Error(EX_ONLY_SIGNED_OUT);
+      this.exOnly.add(gid);
+      return this.galleryHtml(gid, path);
+    }
+    // ExHentai's "sad panda": an empty page (or a bare redirect) for an account it won't let in.
+    if (base === EX_BASE && !res.body.trim()) throw new Error(EX_NO_ACCESS);
+    return htmlBody(url, res.status, res.body);
   }
 
   private async postJson<T>(url: string, body: unknown): Promise<T> {
@@ -567,10 +595,14 @@ class EHentaiBridge extends BridgeBase<Settings> {
     return parts.join("; ");
   }
 
+  private signedIn(): boolean {
+    const c = this.parsedCookies();
+    return !!c.ipb_member_id && !!c.ipb_pass_hash;
+  }
+
   /** Throw a clear error when the cookies needed for account features (favorites) aren't set. */
   private requireAuth(): void {
-    const c = this.parsedCookies();
-    if (!c.ipb_member_id || !c.ipb_pass_hash) {
+    if (!this.signedIn()) {
       throw new Error(
         "favorites require your e-hentai session cookies — on a logged-in browser open DevTools → " +
           "Application → Cookies and paste ipb_member_id and ipb_pass_hash into this bridge's settings",
@@ -934,7 +966,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
     // Try MPV first — 1 request, but requires a logged-in session.
     console.log(`[e-hentai] getSeriesPages ${seriesId}: trying MPV`);
-    const mpvHtml = await this.getHtml(`${this.base()}/mpv/${gid}/${token}/`);
+    const mpvHtml = await this.galleryHtml(gid, `/mpv/${gid}/${token}/`);
     const mpvGone = galleryGone(mpvHtml);
     if (mpvGone) throw mpvGone;
     if (!mpvHtml.includes("eeenope")) {
@@ -961,7 +993,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // Fallback: fetch only the first viewer page to get total count + first batch of thumbnails.
     // Hashes for later pages are resolved lazily in resolvePage as the reader scrolls.
     console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV unavailable, falling back to viewer scraping`);
-    const firstHtml = await this.getHtml(`${this.base()}/g/${gid}/${token}/?p=0`);
+    const firstHtml = await this.galleryHtml(gid, `/g/${gid}/${token}/?p=0`);
     const pageGone = galleryGone(firstHtml);
     if (pageGone) throw pageGone;
     const filecount = extractFilecount(firstHtml);
@@ -996,7 +1028,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     if (cached) return Promise.resolve(cached);
     const pending = this.hashCachePending.get(key);
     if (pending) return pending;
-    const promise = this.getHtml(`${this.base()}/g/${gid}/${token}/?p=${viewerPage}`).then((html) => {
+    const promise = this.galleryHtml(gid, `/g/${gid}/${token}/?p=${viewerPage}`).then((html) => {
       const map = new Map(extractPageHashes(html).map((e) => [e.pageNum, e.hash]));
       this.hashCache.set(key, map);
       this.thumbCache.set(key, extractViewerThumbnails(html));
@@ -1024,9 +1056,9 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
   /** Resolve the CDN URL for a single page on demand (called by the host-server proxy route). */
   async resolvePage(seriesId: string, hash: string, gidRef: string): Promise<string> {
+    const [gid, token] = parseId(seriesId);
     // "_" sentinel: hash wasn't known at getSeriesPages time — look it up lazily.
     if (hash === "_") {
-      const [gid, token] = parseId(seriesId);
       const pageNum = parseInt(gidRef.split("-")[1]!, 10);
       const viewerPage = Math.floor((pageNum - 1) / VIEWER_PAGE_SIZE);
       console.log(`[e-hentai] resolvePage ${gidRef}: fetching hash from viewer page ${viewerPage}`);
@@ -1039,8 +1071,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
       hash = resolved;
     }
 
-    const pageUrl = `${this.base()}/s/${hash}/${gidRef}`;
-    const pageHtml = await this.getHtml(pageUrl);
+    const pagePath = `/s/${hash}/${gidRef}`;
+    const pageHtml = await this.galleryHtml(gid, pagePath);
     const imageUrl = extractImageUrl(pageHtml);
     const refusal = sourceRefusal(pageHtml, imageUrl);
     if (refusal) throw refusal;
@@ -1049,7 +1081,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     const nlMatch = pageHtml.match(/return nl\('([^']+)'\)/);
     if (nlMatch) {
       console.log(`[e-hentai] resolvePage ${gidRef}: image URL missing, retrying with nl token`);
-      const retryHtml = await this.getHtml(`${pageUrl}?nl=${encodeURIComponent(nlMatch[1]!)}`);
+      const retryHtml = await this.galleryHtml(gid, `${pagePath}?nl=${encodeURIComponent(nlMatch[1]!)}`);
       const retryUrl = extractImageUrl(retryHtml);
       const retryRefusal = sourceRefusal(retryHtml, retryUrl);
       if (retryRefusal) throw retryRefusal;
@@ -1058,6 +1090,14 @@ class EHentaiBridge extends BridgeBase<Settings> {
     console.error(`[e-hentai] resolvePage ${gidRef}: could not extract image URL`);
     throw new Error(`Could not extract image URL for page ${gidRef}`);
   }
+}
+
+/** A fetched page's HTML, or the error it amounts to: an HTTP failure, or the site refusing us. */
+function htmlBody(url: string, status: number, body: string): string {
+  if (status >= 400) throw new Error(`HTTP ${status} fetching ${url}`);
+  const refusal = sourceRefusal(body);
+  if (refusal) throw refusal;
+  return body;
 }
 
 /** Epoch seconds → "YYYY-MM-DD" in UTC, or nothing for a value that isn't a date. */

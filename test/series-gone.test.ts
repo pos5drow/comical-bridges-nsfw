@@ -13,7 +13,7 @@ import nhentaiFactory from "../src/nhentai.ts";
 
 type Reply = Partial<HttpResponse> & { body: string };
 
-function host(route: (req: HttpRequest) => Reply): HostCapabilities {
+function host(route: (req: HttpRequest) => Reply, settings: Record<string, unknown> = {}): HostCapabilities {
   return {
     network: {
       request: async (req: HttpRequest): Promise<HttpResponse> => ({
@@ -26,7 +26,7 @@ function host(route: (req: HttpRequest) => Reply): HostCapabilities {
     },
     storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
     log: { debug() {}, info() {}, warn() {}, error() {} },
-    settings: {},
+    settings,
   };
 }
 
@@ -128,6 +128,67 @@ describe("e-hentai", () => {
   test("a full gallery page that merely quotes a notice is not gone", () => {
     const page = `<html>${"x".repeat(20_000)}<div class="c6">unavailable due to a copyright claim by X.</div></html>`;
     expect(galleryGone(page)).toBeUndefined();
+  });
+
+  describe("a gallery e-hentai.org hides", () => {
+    const SIGNED_IN = { cookies: "ipb_member_id=1; ipb_pass_hash=x" };
+    const UNAVAILABLE: Reply = {
+      status: 404,
+      body: "<html><head><title>Gallery Not Available</title></head><body><p>This gallery has been removed or is unavailable.</p></body></html>",
+    };
+    const GALLERY =
+      `<html>${"x".repeat(12_000)}<p class="gpc">Showing 1 - 2 of 2 images</p>` +
+      '<a href="https://exhentai.org/s/aaa111/1-1"></a><a href="https://exhentai.org/s/bbb222/1-2"></a></html>';
+
+    /** e-hentai.org hides gallery 1; ExHentai answers `ex` for it. Records every URL asked for. */
+    const hidden = (ex: (url: string) => Reply, settings: Record<string, unknown> = SIGNED_IN) => {
+      const urls: string[] = [];
+      const caps = host((req) => {
+        urls.push(req.url);
+        if (req.url.startsWith("https://e-hentai.org/")) return UNAVAILABLE;
+        return ex(req.url);
+      }, settings);
+      return { bridge: ehentaiFactory(caps), urls };
+    };
+
+    const exGallery = (url: string): Reply => {
+      if (url.includes("/mpv/")) return { body: "﻿eeenope" };
+      if (url.includes("/s/")) return { body: `<html><img id="img" src="https://cdn.example/${url.includes("bbb222") ? "2" : "1"}.jpg"></html>` };
+      return { body: GALLERY };
+    };
+
+    test("is read from ExHentai when signed in, and its pages keep going there", async () => {
+      const { bridge, urls } = hidden(exGallery);
+      const pages = await bridge.getSeriesPages!("1:abc");
+      expect(pages).toHaveLength(2);
+      expect(await bridge.resolvePage!("1:abc", "bbb222", "1-2")).toBe("https://cdn.example/2.jpg");
+      // Only the first lookup asks e-hentai.org; everything after it goes straight to ExHentai.
+      expect(urls.filter((u) => u.startsWith("https://e-hentai.org/"))).toHaveLength(1);
+      expect(urls.at(-1)).toBe("https://exhentai.org/s/bbb222/1-2");
+    });
+
+    test("a page lookup finds ExHentai on its own (a fresh session that never loaded the gallery)", async () => {
+      const { bridge } = hidden(exGallery);
+      expect(await bridge.resolvePage!("1:abc", "aaa111", "1-1")).toBe("https://cdn.example/1.jpg");
+    });
+
+    test("signed out, it says to sign in — and isn't gone", async () => {
+      const { bridge, urls } = hidden(exGallery, {});
+      await expect(bridge.getSeriesPages!("1:abc")).rejects.toThrow(/only available on ExHentai.*cookies/);
+      expect(await goneReason(bridge.getSeriesPages!("1:abc"))).toBeNull();
+      expect(urls.some((u) => u.startsWith("https://exhentai.org/"))).toBe(false);
+    });
+
+    test("an account ExHentai turns away gets told so — and it isn't gone", async () => {
+      const { bridge } = hidden(() => ({ body: "" }));
+      await expect(bridge.getSeriesPages!("1:abc")).rejects.toThrow(/doesn't have ExHentai access/);
+      expect(await goneReason(bridge.getSeriesPages!("1:abc"))).toBeNull();
+    });
+
+    test("a gallery that really is deleted is still gone on ExHentai", async () => {
+      const { bridge } = hidden(() => ({ body: "Key missing, or incorrect key provided." }));
+      expect(await goneReason(bridge.getSeriesPages!("1:abc"))).toBeTruthy();
+    });
   });
 
   test("getSeriesPages throws gone for a taken-down gallery", async () => {
