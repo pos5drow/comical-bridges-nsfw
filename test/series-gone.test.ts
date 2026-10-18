@@ -1,7 +1,7 @@
 /**
- * A gallery the source no longer has throws the contract's series-gone marker; one it only hid from
- * its listings — still readable — comes back with `delisted` instead. Anything short of the source
- * saying so (a 5xx, a page that's merely unavailable to this account) is neither.
+ * A gallery the source no longer has throws the contract's series-gone marker. One it only hid from
+ * its listings is still readable, so it is not gone, and neither is anything short of the source
+ * saying so (a 5xx, a page that's merely unavailable to this account).
  *
  * Each bridge gets a mock host answering by URL with canned responses shaped like the live ones.
  */
@@ -54,23 +54,9 @@ describe("nhentai", () => {
 });
 
 describe("hitomi", () => {
-  const gallery = (extra: Record<string, unknown>) =>
-    `var galleryinfo = ${JSON.stringify({ id: 1, title: "Subject", files: [{ hash: "a".repeat(64), name: "1.webp" }], ...extra })}`;
-
   test("a gallery file the CDN 404s is gone", async () => {
     const gone = host(() => ({ status: 404, body: "<html>404 Not Found</html>" }));
     expect(await goneReason(hitomiFactory(gone).getSeriesDetails("1"))).toBeTruthy();
-  });
-
-  test("a blocked gallery is delisted, not gone", async () => {
-    const info = await hitomiFactory(host(() => ({ body: gallery({ blocked: 1 }) }))).getSeriesDetails("1");
-    expect(info.delisted?.reason).toBeTruthy();
-    expect(seriesInfoSchema.parse(info).delisted).toEqual(info.delisted!);
-  });
-
-  test("an ordinary gallery carries no notice", async () => {
-    const info = await hitomiFactory(host(() => ({ body: gallery({ blocked: 0 }) }))).getSeriesDetails("1");
-    expect(info.delisted).toBeUndefined();
   });
 
   test("a CDN error is not gone", async () => {
@@ -83,6 +69,14 @@ describe("e-hentai", () => {
   const gdata = (meta: Record<string, unknown>) =>
     host(() => ({ body: JSON.stringify({ gmetadata: [{ gid: 1, token: "abc", title: "Subject", ...meta }] }) }));
 
+  /** Gallery 1 superseded by gallery 2; `newer` is what a lookup of gallery 2 answers. */
+  const superseded = (newer: () => Reply) =>
+    host((req) => {
+      const [[gid]] = (JSON.parse(String(req.body)) as { gidlist: [number, string][] }).gidlist;
+      if (gid === 2) return newer();
+      return { body: JSON.stringify({ gmetadata: [{ gid: 1, token: "abc", title: "Subject", expunged: true, current_gid: "2", current_key: "def" }] }) };
+    });
+
   test("gdata's unknown-key answer is gone", async () => {
     const gone = host(() => ({ body: JSON.stringify({ gmetadata: [{ gid: 1, error: "Key missing, or incorrect key provided." }] }) }));
     expect(await goneReason(ehentaiFactory(gone).getSeriesDetails("1:abc"))).toBeTruthy();
@@ -93,18 +87,29 @@ describe("e-hentai", () => {
     expect(await goneReason(ehentaiFactory(other).getSeriesDetails("1:abc"))).toBeNull();
   });
 
-  test("an expunged gallery is delisted, naming its newer version when there is one", async () => {
-    const replaced = await ehentaiFactory(gdata({ expunged: true, current_gid: "2", current_key: "def" })).getSeriesDetails("1:abc");
-    expect(replaced.title).toBe("Subject");
-    expect(replaced.delisted).toEqual({ reason: "Replaced by a newer version", newerVersionId: "2:def" });
-
-    const expunged = await ehentaiFactory(gdata({ expunged: true, current_gid: "1", current_key: "abc" })).getSeriesDetails("1:abc");
-    expect(expunged.delisted).toEqual({ reason: "Expunged" });
+  test("a superseded gallery reads normally, with its newer version as a related card", async () => {
+    const bridge = ehentaiFactory(superseded(() => ({
+      body: JSON.stringify({ gmetadata: [{ gid: 2, token: "def", title: "Subject (Revised)", thumb: "https://ehgt.org/t/ab/cd/x_250.jpg" }] }),
+    })));
+    const info = seriesInfoSchema.parse(await bridge.getSeriesDetails("1:abc"));
+    expect(info.title).toBe("Subject");
+    expect(info.relatedSeriesGroups).toHaveLength(1);
+    const [group] = info.relatedSeriesGroups!;
+    expect(group).toMatchObject({ label: "Newer version", kind: "alternative" });
+    expect(group.series).toHaveLength(1);
+    expect(group.series[0]).toMatchObject({ id: "2:def", title: "Subject (Revised)" });
+    expect(group.series[0].thumbnailUrl).toBeTruthy();
   });
 
-  test("a visible gallery carries no notice, even when a newer version exists", async () => {
-    const info = await ehentaiFactory(gdata({ expunged: false, current_gid: "2", current_key: "def" })).getSeriesDetails("1:abc");
-    expect(info.delisted).toBeUndefined();
+  test("a failed lookup of the newer version still links it, under this gallery's title", async () => {
+    const info = await ehentaiFactory(superseded(() => ({ status: 500, body: "oops" }))).getSeriesDetails("1:abc");
+    expect(info.relatedSeriesGroups?.[0]?.series).toEqual([{ id: "2:def", title: "Subject" }]);
+  });
+
+  test("an expunged gallery with no newer version reads normally, with no rail", async () => {
+    const info = await ehentaiFactory(gdata({ expunged: true, current_gid: "1", current_key: "abc" })).getSeriesDetails("1:abc");
+    expect(info.title).toBe("Subject");
+    expect(info.relatedSeriesGroups).toBeUndefined();
   });
 
   test("a copyright takedown page is gone, with the claimant as the reason", () => {

@@ -170,8 +170,6 @@ interface HitomiLanguage {
 interface GalleryInfo {
   id: string | number;
   title: string;
-  /** 1 for a gallery the site has pulled from its listings — its files are still served. */
-  blocked?: number;
   japanese_title?: string | null;
   language?: string | null;
   language_localname?: string | null;
@@ -1109,7 +1107,7 @@ class HitomiBridge extends BridgeBase {
   private async fetchGallery(id: string): Promise<GalleryInfo> {
     if (this.lastGallery?.id === id) return this.lastGallery.value;
     const res = await this.request({ url: `${LTN}/galleries/${encodeURIComponent(id)}.js`, headers: this.headers() });
-    // A deleted gallery's file is gone from the CDN; a pulled one is still there, marked `blocked`.
+    // A deleted gallery's file is gone from the CDN; one pulled from the listings is still served.
     if (res.status === 404) throw new Error(seriesGoneMessage());
     if (res.status >= 400) throw new Error(`HTTP ${res.status} fetching gallery ${id}`);
     const text = res.body;
@@ -1123,7 +1121,6 @@ class HitomiBridge extends BridgeBase {
     const g = await this.fetchGallery(seriesId);
 
     const info: SeriesInfo = { id: seriesId, title: g.title || seriesId, shareUrl: `${SITE}/reader/${seriesId}.html` };
-    if (g.blocked) info.delisted = { reason: "Hidden from the site's listings" };
     if (g.files[0]?.hash) info.thumbnailUrl = this.proxied(this.coverUrl(g.files[0].hash));
     if (g.type) info.type = TYPE_LABELS[g.type] ?? g.type;
     if (g.files.length) info.pageCount = g.files.length;

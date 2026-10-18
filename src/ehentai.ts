@@ -26,6 +26,7 @@ import {
   type PageThumbnail,
   type PagedRequest,
   type PagedResults,
+  type RelatedSeriesGroup,
   type SearchRequest,
   type SeriesEntry,
   type SeriesInfo,
@@ -117,8 +118,6 @@ interface GMetadata {
   rating?: string;
   tags?: string[];
   error?: string;
-  /** Hidden from the site (expunged, or replaced by a newer upload) — its pages are still served. */
-  expunged?: boolean;
   /** The newest version of this gallery — itself, unless a newer upload superseded it. */
   current_gid?: string | number;
   current_key?: string;
@@ -832,13 +831,6 @@ class EHentaiBridge extends BridgeBase<Settings> {
       shareUrl: `${this.base()}/g/${gid}/${token}/`,
     };
 
-    if (meta?.expunged) {
-      const newer = meta.current_gid && meta.current_key && String(meta.current_gid) !== String(gid)
-        ? `${meta.current_gid}:${meta.current_key}`
-        : undefined;
-      info.delisted = newer ? { reason: "Replaced by a newer version", newerVersionId: newer } : { reason: "Expunged" };
-    }
-
     if (meta?.thumb) info.thumbnailUrl = fullSizeThumbUrl(meta.thumb);
     // The gallery category (Doujinshi / Manga / …) is its type, shown as the Type cell rather than a
     // lone genre chip (it's also painted as a card badge in list/search views).
@@ -888,7 +880,38 @@ class EHentaiBridge extends BridgeBase<Settings> {
     if (meta?.filesize && meta.filesize > 0) infoCells.push({ label: "Size", value: formatBytes(meta.filesize) });
     if (infoCells.length) info.infoCells = infoCells;
 
+    const newer = meta && (await this.newerVersionGroup(gid, meta));
+    if (newer) info.relatedSeriesGroups = [newer];
+
     return info;
+  }
+
+  /**
+   * The gallery's newest upload as a one-card rail, when a newer one superseded it. The card falls
+   * back to this gallery's title (versions share one) if looking the newer upload up fails.
+   */
+  private async newerVersionGroup(gid: number, meta: GMetadata): Promise<RelatedSeriesGroup | undefined> {
+    const { current_gid: newerGid, current_key: newerKey } = meta;
+    if (!newerGid || !newerKey || String(newerGid) === String(gid)) return undefined;
+    const id = `${newerGid}:${newerKey}`;
+    const entry: SeriesEntry = { id, title: meta.title || id };
+    try {
+      const resp = await this.postJson<GDataResponse>(EH_API, {
+        method: "gdata",
+        gidlist: [[Number(newerGid), newerKey]],
+        namespace: 1,
+      });
+      const newerMeta = resp.gmetadata?.[0];
+      if (newerMeta && !newerMeta.error) {
+        if (newerMeta.title) entry.title = newerMeta.title;
+        if (newerMeta.thumb) entry.thumbnailUrl = normalizeThumbUrl(newerMeta.thumb);
+        const badges = cardBadges(newerMeta);
+        if (badges.length) entry.badges = badges;
+      }
+    } catch {
+      // The gallery itself loaded; a missing cover on the rail isn't worth failing it over.
+    }
+    return { label: "Newer version", kind: "alternative", series: [entry] };
   }
 
   // ── Direct pages ──────────────────────────────────────────────────────────
