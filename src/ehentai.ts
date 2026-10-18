@@ -39,6 +39,7 @@ import {
   defineSettings,
   encodeCursor,
   rateLimitedMessage,
+  seriesGoneMessage,
 } from "@comical/sdk";
 
 const EH_BASE = "https://e-hentai.org";
@@ -116,7 +117,11 @@ interface GMetadata {
   rating?: string;
   tags?: string[];
   error?: string;
+  /** Hidden from the site (expunged, or replaced by a newer upload) — its pages are still served. */
   expunged?: boolean;
+  /** The newest version of this gallery — itself, unless a newer upload superseded it. */
+  current_gid?: string | number;
+  current_key?: string;
 }
 
 interface GDataResponse {
@@ -207,6 +212,24 @@ export function sourceRefusal(html: string, imageUrl?: string): Error | undefine
     ms += Number(n) * units[unit!.toLowerCase()]!;
   }
   return new Error(rateLimitedMessage(ms > 0 ? ms : DEFAULT_BAN_MS, "IP temporarily banned"));
+}
+
+/** gdata's per-gallery answer for an id/token pair it doesn't know — a deleted gallery, or a bad token. */
+const UNKNOWN_GALLERY = /key missing|incorrect key/i;
+
+/**
+ * The series-gone error for a gallery page that is the site saying the gallery doesn't exist: its
+ * bare "Key missing, or incorrect key provided." body, or a copyright takedown notice. The generic
+ * "This gallery has been removed or is unavailable." is NOT one — the site shows it for galleries
+ * that are only hidden from this account (ExHentai-only, or missing cookies) too.
+ */
+export function galleryGone(html: string): Error | undefined {
+  // Both are short notices; a real gallery page that quotes one (a comment, a title) is far longer.
+  if (html.length > 10_000) return undefined;
+  if (UNKNOWN_GALLERY.test(html) && html.length < 500) return new Error(seriesGoneMessage());
+  const claimant = html.match(/unavailable due to a copyright claim by ([^<.]+)/i)?.[1]?.trim();
+  if (claimant) return new Error(seriesGoneMessage(`Copyright claim by ${decodeEntities(claimant)}`));
+  return undefined;
 }
 
 /** Extract { hash, pageNum } pairs from a gallery viewer page. */
@@ -455,7 +478,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.7",
+    version: "0.3.8",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -799,6 +822,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       namespace: 1,
     });
     const meta = resp.gmetadata?.[0];
+    if (meta?.error && UNKNOWN_GALLERY.test(meta.error)) throw new Error(seriesGoneMessage());
     if (meta?.error) throw new Error(`E-Hentai API error: ${meta.error}`);
 
     const info: SeriesInfo = {
@@ -807,6 +831,13 @@ class EHentaiBridge extends BridgeBase<Settings> {
       status: "completed",
       shareUrl: `${this.base()}/g/${gid}/${token}/`,
     };
+
+    if (meta?.expunged) {
+      const newer = meta.current_gid && meta.current_key && String(meta.current_gid) !== String(gid)
+        ? `${meta.current_gid}:${meta.current_key}`
+        : undefined;
+      info.delisted = newer ? { reason: "Replaced by a newer version", newerVersionId: newer } : { reason: "Expunged" };
+    }
 
     if (meta?.thumb) info.thumbnailUrl = fullSizeThumbUrl(meta.thumb);
     // The gallery category (Doujinshi / Manga / …) is its type, shown as the Type cell rather than a
@@ -881,6 +912,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // Try MPV first — 1 request, but requires a logged-in session.
     console.log(`[e-hentai] getSeriesPages ${seriesId}: trying MPV`);
     const mpvHtml = await this.getHtml(`${this.base()}/mpv/${gid}/${token}/`);
+    const mpvGone = galleryGone(mpvHtml);
+    if (mpvGone) throw mpvGone;
     if (!mpvHtml.includes("eeenope")) {
       // dotAll flag handles imagelist JSON that may span multiple lines
       const match = mpvHtml.match(/var imagelist\s*=\s*(\[[\s\S]+?\]);/);
@@ -906,6 +939,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // Hashes for later pages are resolved lazily in resolvePage as the reader scrolls.
     console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV unavailable, falling back to viewer scraping`);
     const firstHtml = await this.getHtml(`${this.base()}/g/${gid}/${token}/?p=0`);
+    const pageGone = galleryGone(firstHtml);
+    if (pageGone) throw pageGone;
     const filecount = extractFilecount(firstHtml);
     if (filecount === 0) {
       console.error(`[e-hentai] getSeriesPages ${seriesId}: could not extract page count from viewer HTML`);

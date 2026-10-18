@@ -41,6 +41,7 @@ import {
   nextPageCursor,
   pageFromCursor,
   parseFilterIncludeExclude,
+  seriesGoneMessage,
 } from "@comical/sdk";
 
 const BASE = "https://nhentai.net/api/v2";
@@ -226,7 +227,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.9",
+    version: "0.2.10",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -326,7 +327,10 @@ class NhentaiBridge extends BridgeBase<Settings> {
   // add includes that are worth paying for up front, or gate them behind a param.
   private async fetchDetail(seriesId: string): Promise<GalleryDetail> {
     if (this.lastDetail?.id === seriesId) return this.lastDetail.data;
-    const data = await this.getJson<GalleryDetail>(`${BASE}/galleries/${encodeURIComponent(seriesId)}`);
+    const res = await this.request({ url: `${BASE}/galleries/${encodeURIComponent(seriesId)}`, headers: this.headers() });
+    // A deleted (or never-existing) gallery is a 404 that says so; any other 404 isn't evidence.
+    if (res.status === 404 && /gallery not found/i.test(res.body)) throw new Error(seriesGoneMessage());
+    const data = JSON.parse(res.body) as GalleryDetail;
     this.lastDetail = { id: seriesId, data };
     return data;
   }
