@@ -19,6 +19,8 @@ import {
   type BridgeInfo,
   type CardBadge,
   type Filter,
+  type HttpRequest,
+  type HttpResponse,
   type InferSettings,
   type InfoCell,
   type ListRequest,
@@ -39,6 +41,7 @@ import {
   defineBridge,
   defineSettings,
   encodeCursor,
+  parseRateLimited,
   rateLimitedMessage,
   seriesGoneMessage,
 } from "@comical/sdk";
@@ -190,17 +193,31 @@ const HOUR_MS = 60 * 60 * 1000;
 const DEFAULT_BAN_MS = 3 * HOUR_MS;
 /** The image quota regenerates continuously; an hour buys back a useful amount of it. */
 const QUOTA_WAIT_MS = HOUR_MS;
+/** The too-fast warning names no wait; a minute's quiet is well clear of the burst that drew it. */
+const TOO_FAST_WAIT_MS = 60_000;
+
+/**
+ * The site's warning, served (with a 200) in place of a page, that we're loading pages too fast —
+ * the step before an IP ban. Like the ban notice it's a bare sentence or two, so a real page that
+ * merely quotes it is far too long to be one.
+ */
+export function tooFastWarning(html: string): Error | undefined {
+  if (html.length > 2000 || !/opening pages too fast/i.test(html)) return undefined;
+  return new Error(rateLimitedMessage(TOO_FAST_WAIT_MS, "opening pages too fast"));
+}
 
 /**
  * The rate-limited error for a page that is the site refusing us rather than content: the IP-ban
- * notice it serves (with a 200) in place of any page, or the quota-exceeded placeholder it puts in
- * a viewer page's image slot. Hosts hold this bridge until the stated wait instead of hammering a
- * ban into a longer one.
+ * notice or the too-fast warning it serves (with a 200) in place of any page, or the quota-exceeded
+ * placeholder it puts in a viewer page's image slot. Hosts hold this bridge until the stated wait
+ * instead of hammering a ban into a longer one.
  */
 export function sourceRefusal(html: string, imageUrl?: string): Error | undefined {
   if (imageUrl && /\/509s?\.gif(?:$|\?)/.test(imageUrl)) {
     return new Error(rateLimitedMessage(QUOTA_WAIT_MS, "image quota exceeded"));
   }
+  const warning = tooFastWarning(html);
+  if (warning) return warning;
   // The notice is a bare sentence or two; a real page that merely mentions a ban (a comment, a
   // title) is far longer.
   if (html.length > 2000 || !/temporarily banned/i.test(html)) return undefined;
@@ -290,6 +307,28 @@ export function isFavoritedFromPopup(html: string): boolean {
     if (/checked/i.test(tag) && /value="[0-9]"/.test(tag)) return true;
   }
   return false;
+}
+
+/**
+ * Whether a gallery is favorited, read off its own gallery page: the favorites link there reads
+ * "Add to Favorites" until it is, then the name of the category it's in. Unknown (undefined) for a
+ * page without the link, or with one that says nothing.
+ */
+export function favoritedFromGalleryPage(html: string): boolean | undefined {
+  const link = html.match(/<a\b[^>]*\bid="favoritelink"[^>]*>([\s\S]*?)<\/a>/i);
+  if (!link) return undefined;
+  const text = decodeEntities(link[1]!.replace(/<[^>]*>/g, "")).trim();
+  if (!text) return undefined;
+  return !/^add to favorites$/i.test(text);
+}
+
+/**
+ * Whether this account opens galleries in the Multi-Page Viewer (an account setting). Its gallery
+ * pages then link every thumbnail to `/mpv/` instead of a page's `/s/` viewer. More than one link,
+ * as gallery-dl tests it, so a lone stray mention isn't taken for the setting.
+ */
+export function offersMpv(html: string): boolean {
+  return (html.match(/hentai\.org\/mpv\//g)?.length ?? 0) > 1;
 }
 
 /** Parse total image count from "Showing 1 - 40 of 185 images" banner. */
@@ -474,6 +513,8 @@ function spriteThumb(t: SpriteTile): PageThumbnail {
 // ── Bridge ────────────────────────────────────────────────────────────────────
 
 const VIEWER_PAGE_SIZE = 20;
+/** How long a gallery page fetched for one open is reused by the other calls of that open. */
+const GALLERY_PAGE_TTL_MS = 30_000;
 
 class EHentaiBridge extends BridgeBase<Settings> {
   // Cache for viewer-page hashes: key = `${gid}:${viewerPageIndex}`, value = pageNum → hash.
@@ -484,11 +525,15 @@ class EHentaiBridge extends BridgeBase<Settings> {
   private readonly thumbCache = new Map<string, Map<number, SpriteTile>>();
   // Galleries e-hentai.org hides that ExHentai serves, so every later page of one goes there too.
   private readonly exOnly = new Set<number>();
+  // Each gallery's front page, briefly, keyed by gid — see `galleryPage`.
+  private readonly galleryPages = new Map<number, { at: number; html: Promise<string> }>();
+  // Until when (epoch ms) the site has told us to back off — see `send`.
+  private holdUntil = 0;
 
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.9",
+    version: "0.3.10",
     contractVersion: "2.0.0",
     languages: ["multi"],
     nsfw: true,
@@ -496,9 +541,17 @@ class EHentaiBridge extends BridgeBase<Settings> {
     ratings: true,
     iconUrl: `${EH_BASE}/favicon.ico`,
     // The site bans IPs for page-load bursts well short of what a reader or a download produces at
-    // full speed, so pages (the /s/ viewer HTML) go one at a time, and the images they point at are
-    // paced to match.
-    rateLimit: { maxConcurrent: 1, minIntervalMs: 3000 },
+    // full speed. Requests go one at a time a second apart, and the per-page viewer (/s/, one per
+    // image — what a reader or a download hammers) is held to 5 per 15s on top: the same long-run
+    // 1 per 3s as before, but a reader opening on a page can resolve it and the next few without
+    // waiting 3s for each. Opening a gallery (its metadata, then its page) no longer pays that 3s
+    // gap per request. The site's too-fast warning, should this still draw one, holds the bridge
+    // (see `send`).
+    rateLimit: {
+      maxConcurrent: 1,
+      minIntervalMs: 1000,
+      routes: [{ match: "/s/**", limit: 5, windowMs: 15_000 }],
+    },
     // The thumbnail CDN isn't what gets an IP banned (the viewer pages and H@H images are), so
     // proxied thumbnails aren't held to the page pacing.
     assetRateLimit: { maxConcurrent: 2, minIntervalMs: 3000, byHost: [{ hosts: ["ehgt.org"] }] },
@@ -535,8 +588,26 @@ class EHentaiBridge extends BridgeBase<Settings> {
     return href.startsWith("http") ? href : this.base() + href;
   }
 
+  /**
+   * Every request this bridge makes. The site's too-fast warning arrives as an ordinary 200 page,
+   * which the runtime's pacing can't see, so the bridge honors it itself: until the wait is up,
+   * every request fails fast as rate-limited instead of reaching a site that just said to back off.
+   * Pressing on through the warning is what earns the IP ban.
+   */
+  private async send(req: HttpRequest): Promise<HttpResponse> {
+    const held = this.holdUntil - Date.now();
+    if (held > 0) throw new Error(rateLimitedMessage(held, "opening pages too fast"));
+    const res = await this.request(req);
+    const warning = tooFastWarning(res.body);
+    if (warning) {
+      this.holdUntil = Date.now() + (parseRateLimited(warning.message)?.retryAfterMs ?? TOO_FAST_WAIT_MS);
+      throw warning;
+    }
+    return res;
+  }
+
   private async getHtml(url: string): Promise<string> {
-    const res = await this.request({ url, method: "GET", headers: this.headers(true) });
+    const res = await this.send({ url, method: "GET", headers: this.headers(true) });
     return htmlBody(url, res.status, res.body);
   }
 
@@ -549,7 +620,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   private async galleryHtml(gid: number, path: string): Promise<string> {
     const base = this.exOnly.has(gid) ? EX_BASE : this.base();
     const url = base + path;
-    const res = await this.request({ url, method: "GET", headers: this.headers(true) });
+    const res = await this.send({ url, method: "GET", headers: this.headers(true) });
     if (base === EH_BASE && res.body.length < 10_000 && UNAVAILABLE_GALLERY.test(res.body)) {
       if (!this.signedIn()) throw new Error(EX_ONLY_SIGNED_OUT);
       this.exOnly.add(gid);
@@ -560,8 +631,29 @@ class EHentaiBridge extends BridgeBase<Settings> {
     return htmlBody(url, res.status, res.body);
   }
 
+  /**
+   * A gallery's front page (`/g/{gid}/{token}/`), shared. Opening a gallery asks for its pages and
+   * whether it's a favorite at once, and this one page answers both, so the calls of one open share
+   * one fetch (a concurrent ask joins the one in flight). It's kept only for that long: a later
+   * visit should see the gallery as it is now. A failed fetch isn't kept at all.
+   */
+  private galleryPage(gid: number, token: string): Promise<string> {
+    const now = Date.now();
+    const hit = this.galleryPages.get(gid);
+    if (hit && now - hit.at < GALLERY_PAGE_TTL_MS) return hit.html;
+    for (const [id, entry] of this.galleryPages) {
+      if (now - entry.at >= GALLERY_PAGE_TTL_MS) this.galleryPages.delete(id);
+    }
+    const entry = { at: now, html: this.galleryHtml(gid, `/g/${gid}/${token}/`) };
+    this.galleryPages.set(gid, entry);
+    entry.html.catch(() => {
+      if (this.galleryPages.get(gid) === entry) this.galleryPages.delete(gid);
+    });
+    return entry.html;
+  }
+
   private async postJson<T>(url: string, body: unknown): Promise<T> {
-    const res = await this.request({
+    const res = await this.send({
       url,
       method: "POST",
       headers: { ...this.headers(), "Content-Type": "application/json" },
@@ -819,6 +911,10 @@ class EHentaiBridge extends BridgeBase<Settings> {
   async isFavorite(seriesId: string): Promise<boolean> {
     this.requireAuth();
     const [gid, token] = parseId(seriesId);
+    // The gallery page says, and opening the gallery fetches it for the page list anyway — so on an
+    // open this costs nothing. The favorites popup is only asked when the page doesn't say.
+    const fromPage = favoritedFromGalleryPage(await this.galleryPage(gid, token));
+    if (fromPage !== undefined) return fromPage;
     return isFavoritedFromPopup(await this.getHtml(this.favPopupUrl(gid, token)));
   }
 
@@ -826,7 +922,9 @@ class EHentaiBridge extends BridgeBase<Settings> {
   private async modifyFavorite(seriesId: string, favcat: string): Promise<void> {
     this.requireAuth();
     const [gid, token] = parseId(seriesId);
-    const res = await this.request({
+    // The gallery page held for this open now shows the old state.
+    this.galleryPages.delete(gid);
+    const res = await this.send({
       url: this.favPopupUrl(gid, token),
       method: "POST",
       headers: {
@@ -949,12 +1047,17 @@ class EHentaiBridge extends BridgeBase<Settings> {
   // ── Direct pages ──────────────────────────────────────────────────────────
 
   /**
-   * Fetch page list via MPV (1 request, requires auth) or viewer scraping fallback.
+   * The page list, from the gallery's front page — or, for an account with the multi-page viewer
+   * turned on, from `/mpv/`.
    *
    * MPV path: all hashes known upfront → proxy URLs embed the hash directly.
-   * Fallback path: only the first viewer page is fetched to get the total count.
-   *   Proxy URLs embed "_" as the hash sentinel; resolvePage resolves the real
-   *   hash on demand using a per-viewer-page cache.
+   * Gallery-page path: the front page gives the total count and the first viewer page's hashes and
+   *   thumbnails. Proxy URLs embed "_" as the hash sentinel; resolvePage resolves the real hash on
+   *   demand using a per-viewer-page cache.
+   *
+   * The front page is fetched either way (it's shared with `isFavorite` on the same open), and says
+   * whether MPV is on, so `/mpv/` is only asked when it can answer — it used to be tried first on
+   * every open, a request (and a pacing gap) wasted for every account without it.
    */
   async getSeriesPages(seriesId: string): Promise<Page[]> {
     const [gid, token] = parseId(seriesId);
@@ -964,41 +1067,42 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // hardcoded "e-hentai" 404s. Derive it from info.id so a future rename can't silently break it.
     const encId = encodeURIComponent(this.info.id);
 
-    // Try MPV first — 1 request, but requires a logged-in session.
-    console.log(`[e-hentai] getSeriesPages ${seriesId}: trying MPV`);
-    const mpvHtml = await this.galleryHtml(gid, `/mpv/${gid}/${token}/`);
-    const mpvGone = galleryGone(mpvHtml);
-    if (mpvGone) throw mpvGone;
-    if (!mpvHtml.includes("eeenope")) {
-      // dotAll flag handles imagelist JSON that may span multiple lines
-      const match = mpvHtml.match(/var imagelist\s*=\s*(\[[\s\S]+?\]);/);
-      if (match) {
-        const imagelist = JSON.parse(match[1]) as Array<{ k: string; t?: string }>;
-        if (imagelist.length > 0) {
-          console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV OK, ${imagelist.length} pages`);
-          return imagelist.map((entry, i) => {
-            const page: Page = {
-              index: i,
-              imageUrl: `/bridges/${encId}/series/${encSeriesId}/page-image/${entry.k}/${gid}-${i + 1}`,
-            };
-            if (typeof entry.t === "string" && entry.t.startsWith("http")) {
-              page.thumbnail = { kind: "image", url: normalizeThumbUrl(entry.t) };
-            }
-            return page;
-          });
-        }
-      }
-    }
-
-    // Fallback: fetch only the first viewer page to get total count + first batch of thumbnails.
-    // Hashes for later pages are resolved lazily in resolvePage as the reader scrolls.
-    console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV unavailable, falling back to viewer scraping`);
-    const firstHtml = await this.galleryHtml(gid, `/g/${gid}/${token}/?p=0`);
+    const firstHtml = await this.galleryPage(gid, token);
     const pageGone = galleryGone(firstHtml);
     if (pageGone) throw pageGone;
+
+    if (offersMpv(firstHtml)) {
+      console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV offered, fetching it`);
+      const mpvHtml = await this.galleryHtml(gid, `/mpv/${gid}/${token}/`);
+      const mpvGone = galleryGone(mpvHtml);
+      if (mpvGone) throw mpvGone;
+      if (!mpvHtml.includes("eeenope")) {
+        // dotAll flag handles imagelist JSON that may span multiple lines
+        const match = mpvHtml.match(/var imagelist\s*=\s*(\[[\s\S]+?\]);/);
+        if (match) {
+          const imagelist = JSON.parse(match[1]) as Array<{ k: string; t?: string }>;
+          if (imagelist.length > 0) {
+            console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV OK, ${imagelist.length} pages`);
+            return imagelist.map((entry, i) => {
+              const page: Page = {
+                index: i,
+                imageUrl: `/bridges/${encId}/series/${encSeriesId}/page-image/${entry.k}/${gid}-${i + 1}`,
+              };
+              if (typeof entry.t === "string" && entry.t.startsWith("http")) {
+                page.thumbnail = { kind: "image", url: normalizeThumbUrl(entry.t) };
+              }
+              return page;
+            });
+          }
+        }
+      }
+      console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV gave no page list, using the gallery page`);
+    }
+
+    // Hashes for later pages are resolved lazily in resolvePage as the reader scrolls.
     const filecount = extractFilecount(firstHtml);
     if (filecount === 0) {
-      console.error(`[e-hentai] getSeriesPages ${seriesId}: could not extract page count from viewer HTML`);
+      console.error(`[e-hentai] getSeriesPages ${seriesId}: could not extract page count from gallery HTML`);
       throw new Error("Gallery not found or expunged.");
     }
 
@@ -1007,7 +1111,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     const firstThumbs = extractViewerThumbnails(firstHtml);
     this.hashCache.set(`${gid}:0`, new Map(firstEntries.map((e) => [e.pageNum, e.hash])));
     this.thumbCache.set(`${gid}:0`, firstThumbs);
-    console.log(`[e-hentai] getSeriesPages ${seriesId}: viewer fallback OK, ${filecount} pages (${firstEntries.length} hashes, ${firstThumbs.size} thumbs for first viewer page)`);
+    console.log(`[e-hentai] getSeriesPages ${seriesId}: ${filecount} pages (${firstEntries.length} hashes, ${firstThumbs.size} thumbs for first viewer page)`);
 
     return Array.from({ length: filecount }, (_, i) => {
       const thumb = firstThumbs.get(i + 1);
@@ -1028,13 +1132,24 @@ class EHentaiBridge extends BridgeBase<Settings> {
     if (cached) return Promise.resolve(cached);
     const pending = this.hashCachePending.get(key);
     if (pending) return pending;
-    const promise = this.galleryHtml(gid, `/g/${gid}/${token}/?p=${viewerPage}`).then((html) => {
-      const map = new Map(extractPageHashes(html).map((e) => [e.pageNum, e.hash]));
-      this.hashCache.set(key, map);
-      this.thumbCache.set(key, extractViewerThumbnails(html));
-      this.hashCachePending.delete(key);
-      return map;
-    });
+    // The first viewer page is the gallery's front page, likely already fetched for this open.
+    const html = viewerPage === 0
+      ? this.galleryPage(gid, token)
+      : this.galleryHtml(gid, `/g/${gid}/${token}/?p=${viewerPage}`);
+    const promise = html.then(
+      (page) => {
+        const map = new Map(extractPageHashes(page).map((e) => [e.pageNum, e.hash]));
+        this.hashCache.set(key, map);
+        this.thumbCache.set(key, extractViewerThumbnails(page));
+        this.hashCachePending.delete(key);
+        return map;
+      },
+      (err: unknown) => {
+        // Not kept: a refusal (a hold, a quota) passes, and the next ask should try again.
+        this.hashCachePending.delete(key);
+        throw err;
+      },
+    );
     this.hashCachePending.set(key, promise);
     return promise;
   }
