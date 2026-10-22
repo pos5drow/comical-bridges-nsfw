@@ -5,7 +5,7 @@
  * hitomi and e-hentai fall in an unlimited group while their page hosts keep the default pacing.
  */
 import { describe, expect, test } from "bun:test";
-import { bridgeInfoSchema, type HostCapabilities, type RateLimitRoute } from "@comical/contract";
+import { bridgeImagePath, bridgeInfoSchema, type HostCapabilities, type RateLimitRoute } from "@comical/contract";
 import { assetBudgetFor, compilePathGlob, hostMatches, hostOf, pathOf } from "@comical/core";
 import ehentaiFactory from "../src/ehentai.ts";
 import hitomiFactory from "../src/hitomi.ts";
@@ -69,6 +69,20 @@ describe("thumbnail hosts are exempt from page pacing", () => {
     const page = assetBudgetFor(decl, "/img-proxy?url=" + encodeURIComponent("https://w1.gold-usergeneratedcontent.net/1/2/3.webp"));
     expect(page?.budget).toEqual({ maxConcurrent: 3, minIntervalMs: 300 });
     expect(page?.key).not.toBe(cover?.key);
+  });
+
+  test("hitomi: the same through the image route", () => {
+    const decl = hitomiFactory(host).info.assetRateLimit;
+    const cover = bridgeImagePath("pos5drow.hitomi", "https://tn.gold-usergeneratedcontent.net/webpbigtn/a/b/c.webp");
+    expect(assetBudgetFor(decl, cover)?.budget).toEqual({});
+    const page = bridgeImagePath("pos5drow.hitomi", `https://w1.gold-usergeneratedcontent.net/${"0".repeat(64)}.webp`);
+    expect(assetBudgetFor(decl, page)?.budget).toEqual({ maxConcurrent: 3, minIntervalMs: 300 });
+  });
+
+  test("e-hentai: a page, routed as its viewer page, is paced like the image it opens", () => {
+    const decl = ehentaiFactory(host).info.assetRateLimit;
+    const page = bridgeImagePath("pos5drow.e-hentai", "https://e-hentai.org/s/abc/1-1");
+    expect(assetBudgetFor(decl, page)?.budget).toEqual({ maxConcurrent: 2, minIntervalMs: 3000 });
   });
 
   test("e-hentai: thumbnails off the CDN, H@H images paced", () => {

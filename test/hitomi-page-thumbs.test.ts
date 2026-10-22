@@ -4,7 +4,7 @@
  * Hitomi only renders the big `webpbigtn` thumbnail for a gallery's cover image(s); interior pages
  * 404 on that path and are only available as the smaller `webpsmalltn`. The reader's page-thumbnail
  * strip must therefore use `webpsmalltn` — otherwise every page past the first showed a broken
- * thumbnail. The full page image (imageUrl) is unaffected and stays on the gg-derived path.
+ * thumbnail. The full page image (imageUrl) is unaffected and stays the page's key.
  *
  * Instantiates the bridge with a mock host answering `galleries/{id}.js` + `gg.js` — no network.
  */
@@ -43,12 +43,6 @@ function galleryHost(): HostCapabilities {
   };
 }
 
-/** Pull the real CDN URL back out of the `/img-proxy?url=…` wrapper the bridge emits. */
-function unproxy(u: string): string {
-  const m = u.match(/\/img-proxy\?url=(.+)$/);
-  return m ? decodeURIComponent(m[1]!) : u;
-}
-
 describe("hitomi page thumbnails", () => {
   test("use webpsmalltn (available for every page), not webpbigtn (cover-only)", async () => {
     const pages = await factory(galleryHost()).getSeriesPages!("1");
@@ -56,14 +50,14 @@ describe("hitomi page thumbnails", () => {
 
     for (const pg of pages) {
       const thumb = pg.thumbnail as { kind: string; url: string };
-      const url = unproxy(thumb.url);
+      const url = thumb.url;
       expect(thumb.kind).toBe("image");
       expect(url).toContain("/webpsmalltn/");
       expect(url).not.toContain("/webpbigtn/");
     }
 
-    // The full image is still the gg-derived page URL — the thumbnail must not equal it.
+    // The full image is still the page's key — the thumbnail must not equal it.
     expect(pages[0]!.imageUrl).not.toBe(pages[0]!.thumbnail && (pages[0]!.thumbnail as { url: string }).url);
-    expect(unproxy(pages[0]!.imageUrl)).toContain(".avif"); // hasavif → avif page image
+    expect(pages[0]!.imageUrl).toEndWith(".avif"); // hasavif → avif page image
   });
 });

@@ -161,7 +161,8 @@ describe("e-hentai", () => {
       const { bridge, urls } = hidden(exGallery);
       const pages = await bridge.getSeriesPages!("1:abc");
       expect(pages).toHaveLength(2);
-      expect(await bridge.resolvePage!("1:abc", "bbb222", "1-2")).toBe("https://cdn.example/2.jpg");
+      expect(pages[1]!.imageUrl).toBe("https://e-hentai.org/mpv/1/abc/#page2");
+      expect(await bridge.interceptImageRequest!(pages[1]!.imageUrl)).toEqual({ url: "https://cdn.example/2.jpg" });
       // Only the first lookup asks e-hentai.org; everything after it goes straight to ExHentai.
       expect(urls.filter((u) => u.startsWith("https://e-hentai.org/"))).toHaveLength(1);
       expect(urls.at(-1)).toBe("https://exhentai.org/s/bbb222/1-2");
@@ -169,7 +170,7 @@ describe("e-hentai", () => {
 
     test("a page lookup finds ExHentai on its own (a fresh session that never loaded the gallery)", async () => {
       const { bridge } = hidden(exGallery);
-      expect(await bridge.resolvePage!("1:abc", "aaa111", "1-1")).toBe("https://cdn.example/1.jpg");
+      expect(await bridge.interceptImageRequest!("https://e-hentai.org/s/aaa111/1-1")).toEqual({ url: "https://cdn.example/1.jpg" });
     });
 
     test("signed out, it says to sign in — and isn't gone", async () => {

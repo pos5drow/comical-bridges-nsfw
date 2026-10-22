@@ -9,11 +9,11 @@
 import { describe, expect, test } from "bun:test";
 import type { HostCapabilities, HttpRequest, HttpResponse } from "@comical/contract";
 import { parseRateLimited } from "@comical/sdk";
-import factory, { favoritedFromGalleryPage, offersMpv, sourceRefusal, tooFastWarning } from "../src/ehentai.ts";
+import factory, { favoritedFromGalleryPage, offersMpv, parsePageUrl, sourceRefusal, tooFastWarning } from "../src/ehentai.ts";
 
 const GID = 4264863;
 const TOKEN = "16c12f5659";
-const SERIES = `${GID}/${TOKEN}`;
+const SERIES = `${GID}:${TOKEN}`;
 const TOO_FAST =
   "You are opening pages too fast, thus placing a heavy load on the server. Back down, or your IP address will be automatically banned.";
 
@@ -113,16 +113,25 @@ describe("opening a gallery", () => {
     const { bridge, urls } = recordingHost((u) =>
       u.includes("/s/") ? `<img id="img" src="https://x.hath.network/h/1.jpg" />` : galleryPage(),
     );
-    await bridge.getSeriesPages!(SERIES);
-    await bridge.resolvePage!(SERIES, "_", `${GID}-2`);
+    const pages = await bridge.getSeriesPages!(SERIES);
+    expect(pages[1]!.imageUrl).toBe(`https://e-hentai.org/mpv/${GID}/${TOKEN}/#page2`);
+    expect(await bridge.interceptImageRequest!(pages[1]!.imageUrl)).toEqual({ url: "https://x.hath.network/h/1.jpg" });
     expect(galleryUrls(urls)).toHaveLength(1);
     expect(urls.at(-1)).toContain(`/s/abc2/${GID}-2`);
   });
 
-  test("MPV is fetched when the gallery page links it", async () => {
+  test("pages saved before `images` still resolve through resolvePage", async () => {
+    const { bridge, urls } = recordingHost((u) =>
+      u.includes("/s/") ? `<img id="img" src="https://x.hath.network/h/1.jpg" />` : galleryPage(),
+    );
+    expect(await bridge.resolvePage!(SERIES, "_", `${GID}-2`)).toBe("https://x.hath.network/h/1.jpg");
+    expect(urls.at(-1)).toContain(`/s/abc2/${GID}-2`);
+  });
+
+  test("MPV is fetched when the gallery page links it, and each page is its viewer page", async () => {
     const { bridge, urls } = recordingHost((u) => (u.includes("/mpv/") ? MPV_PAGE : galleryPage({ mpv: true })), SIGNED_IN);
     const pages = await bridge.getSeriesPages!(SERIES);
-    expect(pages.map((p) => p.imageUrl.split("/page-image/")[1])).toEqual([`k1/${GID}-1`, `k2/${GID}-2`, `k3/${GID}-3`]);
+    expect(pages.map((p) => p.imageUrl)).toEqual([1, 2, 3].map((n) => `https://e-hentai.org/s/k${n}/${GID}-${n}`));
     expect(mpvUrls(urls)).toHaveLength(1);
   });
 
@@ -141,12 +150,28 @@ describe("opening a gallery", () => {
   });
 });
 
+describe("page URLs", () => {
+  test("parse back into the page they name", () => {
+    expect(parsePageUrl(`https://e-hentai.org/s/abc1/${GID}-7`)).toEqual({ hash: "abc1", gid: GID, pageNum: 7 });
+    expect(parsePageUrl(`https://e-hentai.org/mpv/${GID}/${TOKEN}/#page21`)).toEqual({ gid: GID, token: TOKEN, pageNum: 21 });
+  });
+
+  test("anything else isn't one, and the interceptor refuses it", async () => {
+    expect(parsePageUrl(`https://exhentai.org/s/abc1/${GID}-7`)).toBeUndefined();
+    expect(parsePageUrl(`https://e-hentai.org/g/${GID}/${TOKEN}/`)).toBeUndefined();
+    expect(parsePageUrl(`https://e-hentai.org/s/abc1/${GID}-7?nl=1`)).toBeUndefined();
+    const { bridge, urls } = recordingHost(() => galleryPage());
+    await expect(bridge.interceptImageRequest!("https://ehgt.org/t/a.jpg")).rejects.toThrow("Not a page URL");
+    expect(urls).toHaveLength(0);
+  });
+});
+
 describe("the too-fast hold", () => {
   test("after the warning, every request fails fast as rate-limited without reaching the site", async () => {
     const { bridge, urls } = recordingHost(() => TOO_FAST);
     const first = await bridge.getSeriesPages!(SERIES).catch((e: Error) => e);
     expect(parseRateLimited((first as Error).message)).toBeDefined();
-    const second = await bridge.resolvePage!(SERIES, "abc1", `${GID}-1`).catch((e: Error) => e);
+    const second = await bridge.interceptImageRequest!(`https://e-hentai.org/s/abc1/${GID}-1`).catch((e: Error) => e);
     expect(parseRateLimited((second as Error).message)?.retryAfterMs).toBeGreaterThan(0);
     expect(urls).toHaveLength(1);
   });

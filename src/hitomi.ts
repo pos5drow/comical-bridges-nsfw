@@ -21,8 +21,10 @@
  * Search is genuine set algebra over those indexes — see `resolve`/`collect` and `hitomi/query.ts`.
  *
  * Every image (covers and pages) is hotlink-protected — the CDN 404s without a
- * `Referer: https://hitomi.la/` — so all image URLs are served through the host's `/img-proxy`
- * (declared via `assetProxy`), which attaches that Referer server-side.
+ * `Referer: https://hitomi.la/` — so `images` declares that header and the host attaches it. A page
+ * image's real URL embeds gg.js's rotating path, so it goes stale within the hour: pages are emitted
+ * under a stable key instead (`pageKeyUrl`), which `interceptImageRequest` turns into the current
+ * URL each time the image is fetched.
  */
 import {
   BridgeBase,
@@ -30,6 +32,7 @@ import {
   type Filter,
   type HttpRequest,
   type HttpResponse,
+  type ImageRequest,
   type InfoCell,
   type ListRequest,
   type Page,
@@ -71,6 +74,8 @@ const SITE = "https://hitomi.la";
 const D2 = "gold-usergeneratedcontent.net";
 const LTN = `https://ltn.${D2}`;
 const TN = `https://tn.${D2}`;
+/** Host of the stable page-image keys (`pageKeyUrl`); never fetched as is. */
+const PAGE_KEY_HOST = `w1.${D2}`;
 /** Tag autocomplete lives on its own host (the site fetches it cross-origin; no Referer needed). */
 const TAGINDEX = "https://tagindex.hitomi.la";
 const REFERER = `${SITE}/`;
@@ -362,8 +367,8 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.4.4",
-    contractVersion: "2.0.0",
+    version: "0.5.0",
+    contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: [
@@ -382,7 +387,9 @@ class HitomiBridge extends BridgeBase {
     iconUrl: `${LTN}/favicon-192x192.png`,
     // Static CDN — tolerates parallel card fetches; a browse page pulls ~24 galleryblocks.
     rateLimit: { maxConcurrent: 5, minIntervalMs: 120 },
-    // Every image (covers + pages) is served through the host's /img-proxy with the required Referer.
+    // Every image needs the Referer; page keys are turned into their current URL at fetch time.
+    images: { hosts: [D2], headers: { Referer: REFERER }, intercept: [PAGE_KEY_HOST] },
+    // Only for `/img-proxy` URLs saved by versions before `images` (library covers).
     assetProxy: { hosts: [D2], referer: REFERER },
     // A chapter download pulls every page through the proxy; the CDN answers a burst with 503s.
     // Covers come off the thumbnail host, which takes a grid's worth at once — they'd otherwise
@@ -391,6 +398,7 @@ class HitomiBridge extends BridgeBase {
   };
 
   private gg: { at: number; value: Gg } | undefined;
+  private ggPending: Promise<Gg> | undefined;
   private ftsVersion: { at: number; value: string } | undefined;
   /** nozomi url → byte length (id count × 4). Cheap to obtain, worth not re-asking. */
   private readonly nozomiSizes = new Map<string, number>();
@@ -413,18 +421,7 @@ class HitomiBridge extends BridgeBase {
     return res;
   }
 
-  // ── /img-proxy URL builder ─────────────────────────────────────────────────
-
-  /**
-   * Server-relative proxied URL. Every hitomi image (covers AND pages) is Referer-gated, so all of
-   * them route through the host's `/img-proxy` (declared via `assetProxy`), which attaches the
-   * `hitomi.la` Referer. A relative path (not an absolute host URL) lets each client resolve it
-   * against its own host — the network server on web, the in-process transport on device — instead
-   * of a host baked in here that a device can't reach.
-   */
-  private proxied(absUrl: string): string {
-    return `/img-proxy?url=${encodeURIComponent(absUrl)}`;
-  }
+  // ── Image URLs ──────────────────────────────────────────────────────────────
 
   private coverUrl(hash: string): string {
     return `${TN}/webpbigtn/${thumbDir(hash)}/${hash}.webp`;
@@ -441,13 +438,26 @@ class HitomiBridge extends BridgeBase {
 
   // ── gg.js ──────────────────────────────────────────────────────────────────
 
-  /** Fetch + parse gg.js, cached briefly. `b` rotates (~hourly), so a short TTL keeps page URLs fresh. */
-  private async getGg(): Promise<Gg> {
+  /**
+   * Fetch + parse gg.js, cached briefly. `b` rotates (~hourly), so a short TTL keeps page URLs fresh.
+   * A reader's burst of page fetches shares one request when the cache has lapsed.
+   */
+  private getGg(): Promise<Gg> {
     const GG_TTL_MS = 3 * 60 * 1000;
-    if (this.gg && Date.now() - this.gg.at < GG_TTL_MS) return this.gg.value;
-    const value = parseGg(await this.fetchText(`${LTN}/gg.js`, this.headers()));
-    this.gg = { at: Date.now(), value };
-    return value;
+    if (this.gg && Date.now() - this.gg.at < GG_TTL_MS) return Promise.resolve(this.gg.value);
+    this.ggPending ??= this.fetchText(`${LTN}/gg.js`, this.headers()).then(
+      (text) => {
+        const value = parseGg(text);
+        this.gg = { at: Date.now(), value };
+        this.ggPending = undefined;
+        return value;
+      },
+      (err: unknown) => {
+        this.ggPending = undefined;
+        throw err;
+      },
+    );
+    return this.ggPending;
   }
 
   /** Full image URL for one file, replicating hitomi's common.js url_from_url_from_hash (no base). */
@@ -458,6 +468,18 @@ class HitomiBridge extends BridgeBase {
     // subdomain_from_url: `w`/`a` + (1 + gg.m(g)).
     const sub = (ext === "webp" ? "w" : "a") + (1 + (gg.cases.get(g) ?? gg.def));
     return `https://${sub}.${D2}/${gg.b}${g}/${hash}.${ext}`;
+  }
+
+  /** A page image's stable key: everything `imageUrl` needs except gg.js, so it never goes stale. */
+  private pageKeyUrl(hash: string, ext: "webp" | "avif"): string {
+    return `https://${PAGE_KEY_HOST}/${hash}.${ext}`;
+  }
+
+  /** A page key (`pageKeyUrl`) → the page image's URL under the current gg.js. */
+  async interceptImageRequest(url: string): Promise<ImageRequest> {
+    const key = parsePageKey(url);
+    if (!key) throw new Error(`Not a page image key: ${url}`);
+    return { url: this.imageUrl(await this.getGg(), key.hash, key.ext) };
   }
 
   // ── Byte-range reads ────────────────────────────────────────────────────────
@@ -614,7 +636,7 @@ class HitomiBridge extends BridgeBase {
       // The card's cover hash rides along in the thumbnail img/source; proxy it (Referer-gated).
       const raw = $("img.lazyload").first().attr("data-src");
       const hash = raw?.match(/([0-9a-f]{64})\.\w+$/)?.[1];
-      if (hash) entry.thumbnailUrl = this.proxied(this.coverUrl(hash));
+      if (hash) entry.thumbnailUrl = this.coverUrl(hash);
 
       const artists = $(".artist-list a")
         .map((_i, el) => $(el).text().trim())
@@ -1121,7 +1143,7 @@ class HitomiBridge extends BridgeBase {
     const g = await this.fetchGallery(seriesId);
 
     const info: SeriesInfo = { id: seriesId, title: g.title || seriesId, shareUrl: `${SITE}/reader/${seriesId}.html` };
-    if (g.files[0]?.hash) info.thumbnailUrl = this.proxied(this.coverUrl(g.files[0].hash));
+    if (g.files[0]?.hash) info.thumbnailUrl = this.coverUrl(g.files[0].hash);
     if (g.type) info.type = TYPE_LABELS[g.type] ?? g.type;
     if (g.files.length) info.pageCount = g.files.length;
 
@@ -1239,16 +1261,20 @@ class HitomiBridge extends BridgeBase {
   // ── Direct pages ────────────────────────────────────────────────────────────
 
   async getSeriesPages(seriesId: string): Promise<Page[]> {
-    const [g, gg] = await Promise.all([this.fetchGallery(seriesId), this.getGg()]);
-    return g.files.map((f, index): Page => {
-      const ext: "webp" | "avif" = f.hasavif ? "avif" : "webp";
-      return {
-        index,
-        imageUrl: this.proxied(this.imageUrl(gg, f.hash, ext)),
-        thumbnail: { kind: "image", url: this.proxied(this.pageThumbUrl(f.hash)) },
-      };
-    });
+    const g = await this.fetchGallery(seriesId);
+    return g.files.map((f, index): Page => ({
+      index,
+      imageUrl: this.pageKeyUrl(f.hash, f.hasavif ? "avif" : "webp"),
+      thumbnail: { kind: "image", url: this.pageThumbUrl(f.hash) },
+    }));
   }
+}
+
+/** Parse a page key (`pageKeyUrl`). Exported for tests. */
+export function parsePageKey(url: string): { hash: string; ext: "webp" | "avif" } | undefined {
+  const m = /^https:\/\/([^/]+)\/([0-9a-f]{3,})\.(webp|avif)$/.exec(url);
+  if (!m || m[1] !== PAGE_KEY_HOST) return undefined;
+  return { hash: m[2]!, ext: m[3] as "webp" | "avif" };
 }
 
 /** `female:yuri` → a search term. The inverse of `tagId`. */

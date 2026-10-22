@@ -21,6 +21,7 @@ import {
   type Filter,
   type HttpRequest,
   type HttpResponse,
+  type ImageRequest,
   type InferSettings,
   type InfoCell,
   type ListRequest,
@@ -499,7 +500,7 @@ export function extractViewerThumbnails(html: string): Map<number, SpriteTile> {
 function spriteThumb(t: SpriteTile): PageThumbnail {
   return {
     kind: "sprite",
-    sheetUrl: `/img-proxy?url=${encodeURIComponent(t.src)}`,
+    sheetUrl: t.src,
     x: t.x,
     y: t.y,
     w: t.w,
@@ -533,8 +534,8 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.3.10",
-    contractVersion: "2.0.0",
+    version: "0.4.0",
+    contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "settings", "direct", "favorites"],
@@ -555,10 +556,15 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // The thumbnail CDN isn't what gets an IP banned (the viewer pages and H@H images are), so
     // proxied thumbnails aren't held to the page pacing.
     assetRateLimit: { maxConcurrent: 2, minIntervalMs: 3000, byHost: [{ hosts: ["ehgt.org"] }] },
-    // Hosts whose assets this bridge serves via the host's `/img-proxy` (montage sprite sheets on
-    // the H@H network; the CDN thumbnail hosts are covered too though covers load direct today).
-    // The host derives its proxy allowlist from this — it hardcodes no source hostnames. The Referer
-    // some of these backends expect is sent by the host on our behalf.
+    // A page image is emitted as its viewer page (`/s/…`, or the multi-page viewer's `#pageN` when
+    // its hash isn't known yet), which `interceptImageRequest` opens for the image URL each time the
+    // image is fetched. Everything else — covers, sprite sheets, the images themselves — loads
+    // directly; none needs a header.
+    images: {
+      hosts: ["e-hentai.org", "exhentai.org", "hath.network", "ehgt.org"],
+      intercept: ["e-hentai.org"],
+    },
+    // Only for `/img-proxy` sprite-sheet URLs saved by versions before `images`.
     assetProxy: {
       hosts: ["ehgt.org", "exhentai.org", "hath.network"],
       referer: `${EH_BASE}/`,
@@ -1050,10 +1056,10 @@ class EHentaiBridge extends BridgeBase<Settings> {
    * The page list, from the gallery's front page — or, for an account with the multi-page viewer
    * turned on, from `/mpv/`.
    *
-   * MPV path: all hashes known upfront → proxy URLs embed the hash directly.
+   * MPV path: all hashes known upfront → each page is its viewer page, `/s/{hash}/{gid}-{n}`.
    * Gallery-page path: the front page gives the total count and the first viewer page's hashes and
-   *   thumbnails. Proxy URLs embed "_" as the hash sentinel; resolvePage resolves the real hash on
-   *   demand using a per-viewer-page cache.
+   *   thumbnails. Each page is the multi-page viewer at it, `/mpv/{gid}/{token}/#page{n}`; its hash
+   *   is looked up when the image is fetched, using a per-viewer-page cache (see `pageImageUrl`).
    *
    * The front page is fetched either way (it's shared with `isFavorite` on the same open), and says
    * whether MPV is on, so `/mpv/` is only asked when it can answer — it used to be tried first on
@@ -1061,11 +1067,6 @@ class EHentaiBridge extends BridgeBase<Settings> {
    */
   async getSeriesPages(seriesId: string): Promise<Page[]> {
     const [gid, token] = parseId(seriesId);
-    const encSeriesId = encodeURIComponent(seriesId);
-    // Self-referential proxy path must use this bridge's *actual* id (publisher-scoped, e.g.
-    // "pos5drow.e-hentai") — the host resolves the page-image route by the exact id segment, so a
-    // hardcoded "e-hentai" 404s. Derive it from info.id so a future rename can't silently break it.
-    const encId = encodeURIComponent(this.info.id);
 
     const firstHtml = await this.galleryPage(gid, token);
     const pageGone = galleryGone(firstHtml);
@@ -1086,7 +1087,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
             return imagelist.map((entry, i) => {
               const page: Page = {
                 index: i,
-                imageUrl: `/bridges/${encId}/series/${encSeriesId}/page-image/${entry.k}/${gid}-${i + 1}`,
+                imageUrl: viewerUrl(entry.k, gid, i + 1),
               };
               if (typeof entry.t === "string" && entry.t.startsWith("http")) {
                 page.thumbnail = { kind: "image", url: normalizeThumbUrl(entry.t) };
@@ -1099,7 +1100,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV gave no page list, using the gallery page`);
     }
 
-    // Hashes for later pages are resolved lazily in resolvePage as the reader scrolls.
+    // Hashes for later pages are resolved lazily in pageImageUrl as the reader scrolls.
     const filecount = extractFilecount(firstHtml);
     if (filecount === 0) {
       console.error(`[e-hentai] getSeriesPages ${seriesId}: could not extract page count from gallery HTML`);
@@ -1117,7 +1118,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       const thumb = firstThumbs.get(i + 1);
       const page: Page = {
         index: i,
-        imageUrl: `/bridges/${encId}/series/${encSeriesId}/page-image/_/${gid}-${i + 1}`,
+        imageUrl: `${EH_BASE}/mpv/${gid}/${token}/#page${i + 1}`,
       };
       if (thumb) page.thumbnail = spriteThumb(thumb);
       return page;
@@ -1169,21 +1170,38 @@ class EHentaiBridge extends BridgeBase<Settings> {
     return spriteThumb(thumb);
   }
 
-  /** Resolve the CDN URL for a single page on demand (called by the host-server proxy route). */
+  /** A page URL emitted by `getSeriesPages` → its image's URL, opened from the viewer page now. */
+  async interceptImageRequest(url: string): Promise<ImageRequest> {
+    const page = parsePageUrl(url);
+    if (!page) throw new Error(`Not a page URL: ${url}`);
+    return { url: await this.pageImageUrl(page.gid, page.token, page.hash, page.pageNum) };
+  }
+
+  /** Pages emitted by versions before `images` (`/page-image/{hash|_}/{gid}-{n}`). */
   async resolvePage(seriesId: string, hash: string, gidRef: string): Promise<string> {
     const [gid, token] = parseId(seriesId);
-    // "_" sentinel: hash wasn't known at getSeriesPages time — look it up lazily.
-    if (hash === "_") {
-      const pageNum = parseInt(gidRef.split("-")[1]!, 10);
+    const pageNum = parseInt(gidRef.split("-")[1]!, 10);
+    return this.pageImageUrl(gid, token, hash === "_" ? undefined : hash, pageNum);
+  }
+
+  /** Open a page's viewer page for its image URL, looking its hash up first when it isn't known. */
+  private async pageImageUrl(
+    gid: number,
+    token: string | undefined,
+    hash: string | undefined,
+    pageNum: number,
+  ): Promise<string> {
+    const gidRef = `${gid}-${pageNum}`;
+    if (hash === undefined) {
+      if (token === undefined) throw new Error(`No hash or token for page ${gidRef}`);
       const viewerPage = Math.floor((pageNum - 1) / VIEWER_PAGE_SIZE);
-      console.log(`[e-hentai] resolvePage ${gidRef}: fetching hash from viewer page ${viewerPage}`);
+      console.log(`[e-hentai] page ${gidRef}: fetching hash from viewer page ${viewerPage}`);
       const map = await this.getViewerPageHashes(gid, token, viewerPage);
-      const resolved = map.get(pageNum);
-      if (!resolved) {
-        console.error(`[e-hentai] resolvePage ${gidRef}: hash not found in viewer page ${viewerPage} (${map.size} entries)`);
+      hash = map.get(pageNum);
+      if (!hash) {
+        console.error(`[e-hentai] page ${gidRef}: hash not found in viewer page ${viewerPage} (${map.size} entries)`);
         throw new Error(`Hash not found for page ${pageNum}`);
       }
-      hash = resolved;
     }
 
     const pagePath = `/s/${hash}/${gidRef}`;
@@ -1195,16 +1213,35 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // Image URL missing — CDN assignment may have expired; retry with nl token if present
     const nlMatch = pageHtml.match(/return nl\('([^']+)'\)/);
     if (nlMatch) {
-      console.log(`[e-hentai] resolvePage ${gidRef}: image URL missing, retrying with nl token`);
+      console.log(`[e-hentai] page ${gidRef}: image URL missing, retrying with nl token`);
       const retryHtml = await this.galleryHtml(gid, `${pagePath}?nl=${encodeURIComponent(nlMatch[1]!)}`);
       const retryUrl = extractImageUrl(retryHtml);
       const retryRefusal = sourceRefusal(retryHtml, retryUrl);
       if (retryRefusal) throw retryRefusal;
       if (retryUrl) return retryUrl;
     }
-    console.error(`[e-hentai] resolvePage ${gidRef}: could not extract image URL`);
+    console.error(`[e-hentai] page ${gidRef}: could not extract image URL`);
     throw new Error(`Could not extract image URL for page ${gidRef}`);
   }
+}
+
+/** A page's viewer page. */
+function viewerUrl(hash: string, gid: number, pageNum: number): string {
+  return `${EH_BASE}/s/${hash}/${gid}-${pageNum}`;
+}
+
+/**
+ * A page URL `getSeriesPages` emits — a viewer page, or the multi-page viewer at a page — or
+ * undefined for anything else. Exported for tests.
+ */
+export function parsePageUrl(
+  url: string,
+): { gid: number; token?: string; hash?: string; pageNum: number } | undefined {
+  const viewer = /^https:\/\/e-hentai\.org\/s\/([0-9a-f]+)\/(\d+)-(\d+)$/.exec(url);
+  if (viewer) return { hash: viewer[1]!, gid: Number(viewer[2]), pageNum: Number(viewer[3]) };
+  const mpv = /^https:\/\/e-hentai\.org\/mpv\/(\d+)\/([0-9a-f]+)\/#page(\d+)$/.exec(url);
+  if (mpv) return { gid: Number(mpv[1]), token: mpv[2]!, pageNum: Number(mpv[3]) };
+  return undefined;
 }
 
 /** A fetched page's HTML, or the error it amounts to: an HTTP failure, or the site refusing us. */

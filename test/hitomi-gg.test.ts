@@ -8,7 +8,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import type { HostCapabilities, HttpRequest, HttpResponse } from "@comical/contract";
-import factory, { parseGg } from "../src/hitomi.ts";
+import factory, { parseGg, parsePageKey } from "../src/hitomi.ts";
 
 // g = parseInt(last char + previous two, 16): "…" + "01" + "0" → 0x001 = 1; "…" + "02" + "0" → 2.
 const H_CASE = "0".repeat(61) + "010";
@@ -35,9 +35,11 @@ function host(gg: string): HostCapabilities {
   };
 }
 
-function unproxy(u: string): string {
-  const m = u.match(/\/img-proxy\?url=(.+)$/);
-  return m ? decodeURIComponent(m[1]!) : u;
+/** Each page's real URL, as the image route asks the bridge for it. */
+async function pageUrls(gg: string): Promise<string[]> {
+  const bridge = factory(host(gg));
+  const pages = await bridge.getSeriesPages!("1");
+  return Promise.all(pages.map(async (p) => (await bridge.interceptImageRequest!(p.imageUrl)).url));
 }
 
 describe("hitomi gg.js", () => {
@@ -55,15 +57,46 @@ describe("hitomi gg.js", () => {
   });
 
   test("page subdomains follow gg.m in the default-0 shape", async () => {
-    const [p0, p1] = await factory(host(GG_DEFAULT_0)).getSeriesPages!("1");
-    expect(unproxy(p0!.imageUrl)).toStartWith("https://w2."); // case → 1
-    expect(unproxy(p1!.imageUrl)).toStartWith("https://w1."); // default → 0
+    const [p0, p1] = await pageUrls(GG_DEFAULT_0);
+    expect(p0).toStartWith("https://w2."); // case → 1
+    expect(p1).toStartWith("https://w1."); // default → 0
   });
 
   test("page subdomains follow gg.m in the inverted default-1 shape", async () => {
-    const [p0, p1] = await factory(host(GG_DEFAULT_1)).getSeriesPages!("1");
-    expect(unproxy(p0!.imageUrl)).toStartWith("https://w1."); // case → 0
-    expect(unproxy(p1!.imageUrl)).toStartWith("https://w2."); // default → 1
-    expect(unproxy(p1!.imageUrl)).toBe(`https://w2.gold-usergeneratedcontent.net/1700000000/2/${H_DEFAULT}.webp`);
+    const [p0, p1] = await pageUrls(GG_DEFAULT_1);
+    expect(p0).toStartWith("https://w1."); // case → 0
+    expect(p1).toStartWith("https://w2."); // default → 1
+    expect(p1).toBe(`https://w2.gold-usergeneratedcontent.net/1700000000/2/${H_DEFAULT}.webp`);
+  });
+});
+
+describe("hitomi page keys", () => {
+  test("pages are emitted as keys that don't depend on gg.js, so they never expire", async () => {
+    const a = await factory(host(GG_DEFAULT_0)).getSeriesPages!("1");
+    const b = await factory(host(GG_DEFAULT_1)).getSeriesPages!("1");
+    expect(a.map((p) => p.imageUrl)).toEqual(b.map((p) => p.imageUrl));
+    expect(a[1]!.imageUrl).toBe(`https://w1.gold-usergeneratedcontent.net/${H_DEFAULT}.webp`);
+    expect(parsePageKey(a[1]!.imageUrl)).toEqual({ hash: H_DEFAULT, ext: "webp" });
+  });
+
+  test("the interceptor refuses anything that isn't a page key", async () => {
+    const bridge = factory(host(GG_DEFAULT_0));
+    expect(parsePageKey(`https://w2.gold-usergeneratedcontent.net/${H_DEFAULT}.webp`)).toBeUndefined();
+    expect(parsePageKey(`https://w1.gold-usergeneratedcontent.net/1700000000/2/${H_DEFAULT}.webp`)).toBeUndefined();
+    await expect(bridge.interceptImageRequest!("https://tn.gold-usergeneratedcontent.net/a.webp")).rejects.toThrow();
+  });
+
+  test("concurrent page lookups share one gg.js fetch", async () => {
+    let ggFetches = 0;
+    const caps = host(GG_DEFAULT_0);
+    const request = caps.network.request;
+    caps.network.request = async (req) => {
+      if (req.url.endsWith("/gg.js")) ggFetches++;
+      return request(req);
+    };
+    const bridge = factory(caps);
+    const pages = await bridge.getSeriesPages!("1");
+    await Promise.all(pages.map((p) => bridge.interceptImageRequest!(p.imageUrl)));
+    expect(ggFetches).toBe(1);
   });
 });
