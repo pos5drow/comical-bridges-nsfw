@@ -33,7 +33,9 @@ import {
   type SeriesList,
   type SortOption,
   type InferSettings,
+  type SettingActionResult,
   type SettingDescriptor,
+  type SettingsForm,
   type Tag,
   type TagGroup,
   abbreviateLanguage,
@@ -69,6 +71,7 @@ const SETTINGS = defineSettings([
   },
 ]);
 type Settings = InferSettings<typeof SETTINGS>;
+const TEST_KEY = "test-key";
 
 // ── DTOs ──────────────────────────────────────────────────────────────────────
 // List items and detail use different shapes in the v2 API.
@@ -264,6 +267,19 @@ class NhentaiBridge extends BridgeBase<Settings> {
 
   getSettings(): SettingDescriptor[] {
     return [...SETTINGS];
+  }
+
+  async loadSettings(): Promise<SettingsForm> {
+    return { sections: [{ title: "Account", items: [...SETTINGS, { type: "action", key: TEST_KEY, label: "Test API key" }] }] };
+  }
+
+  async runSettingAction(key: string): Promise<SettingActionResult> {
+    if (key !== TEST_KEY) throw new Error(`unknown settings action "${key}"`);
+    if (!this.setting("apiKey")) return { ok: false, message: "Enter an API key first." };
+    const res = await this.request({ url: `${BASE}/favorites?page=1&per_page=1`, headers: this.headers() });
+    if (res.status === 401 || res.status === 403) return { ok: false, message: "nhentai rejected this API key." };
+    if (res.status >= 400) throw new Error(`HTTP ${res.status} checking the API key`);
+    return { ok: true, message: "API key accepted" };
   }
 
   private headers(): Record<string, string> {

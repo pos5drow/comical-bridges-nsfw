@@ -35,7 +35,9 @@ import {
   type SeriesEntry,
   type SeriesInfo,
   type SeriesList,
+  type SettingActionResult,
   type SettingDescriptor,
+  type SettingsForm,
   type TagGroup,
   type TagKind,
   abbreviateLanguage,
@@ -103,6 +105,7 @@ const SETTINGS = defineSettings([
   },
 ]);
 type Settings = InferSettings<typeof SETTINGS>;
+const TEST_LOGIN = "test-login";
 
 // ── DTOs ──────────────────────────────────────────────────────────────────────
 
@@ -288,6 +291,25 @@ export function parseCookieString(raw: string): Record<string, string> {
     const name = s.slice(0, eq).trim();
     const value = s.slice(eq + 1).trim();
     if (value) out[name] = value;
+  }
+  return out;
+}
+
+/**
+ * The account's names for its ten favorite categories, from the category bar atop favorites.php
+ * (a `.fp` block per slot: count, icon, name — EhViewer reads it the same way). Null when the page
+ * doesn't carry all ten, so a changed layout never mislabels a slot.
+ */
+export function parseFavoriteCategories(html: string): { name: string; count: number }[] | null {
+  const starts = [...html.matchAll(/<div\b[^>]*\bclass="fp(?:\s[^"]*)?"[^>]*>/gi)].map((m) => m.index!);
+  if (starts.length < 10) return null;
+  const out: { name: string; count: number }[] = [];
+  for (let i = 0; i < 10; i++) {
+    const block = html.slice(starts[i], starts[i + 1] ?? starts[i]! + 2000);
+    const texts = [...block.matchAll(/<div\b[^>]*>([^<]*)<\/div>/gi)].map((m) => decodeEntities(m[1]!).trim());
+    const name = texts[2];
+    if (!name) return null;
+    out.push({ name, count: Number.parseInt(texts[0]!.replace(/,/g, ""), 10) || 0 });
   }
   return out;
 }
@@ -575,6 +597,54 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
   getSettings(): SettingDescriptor[] {
     return [...SETTINGS];
+  }
+
+  /** Names the favorite slots after the account's own categories when signed in; the bare 0–9 when
+   *  not, or when the site can't be read — the form must still open. */
+  async loadSettings(): Promise<SettingsForm> {
+    const field = <K extends keyof Settings>(key: K) => SETTINGS.find((d) => d.key === key)!;
+    const declared = field("favcat") as Extract<SettingDescriptor, { type: "enum" }>;
+    let favcat: SettingDescriptor = declared;
+    let favFooter: string | undefined;
+    if (this.signedIn()) {
+      try {
+        const html = await this.getHtml(`${this.base()}/favorites.php`);
+        const cats = parseFavoriteCategories(html);
+        if (isLoggedOut(html)) favFooter = "Your cookies were treated as signed out, so categories are shown by number.";
+        else if (cats) {
+          favcat = {
+            ...declared,
+            description: "Which category new favorites are added to. Browsing always shows them all.",
+            options: cats.map((c, i) => ({ value: String(i), label: `${c.name} (${c.count})` })),
+          };
+        } else favFooter = "Couldn't read your category names, so they're shown by number.";
+      } catch (e) {
+        if (parseRateLimited((e as Error).message)) throw e;
+        favFooter = "Couldn't reach the site for your category names, so they're shown by number.";
+      }
+    }
+    return {
+      sections: [
+        { title: "Account", items: [field("cookies"), { type: "action", key: TEST_LOGIN, label: "Check cookies" }] },
+        { title: "Site", items: [field("exhentai")] },
+        { title: "Favorites", footer: favFooter, items: [favcat] },
+      ],
+    };
+  }
+
+  async runSettingAction(key: string): Promise<SettingActionResult> {
+    if (key !== TEST_LOGIN) throw new Error(`unknown settings action "${key}"`);
+    if (!this.signedIn()) return { ok: false, message: "Paste cookies that include ipb_member_id and ipb_pass_hash first." };
+    const res = await this.send({ url: `${this.base()}/favorites.php`, method: "GET", headers: this.headers(true) });
+    // ExHentai answers an account without access, or a missing igneous, with an empty 200.
+    if (this.setting("exhentai") && res.status < 400 && !res.body.trim()) {
+      return { ok: false, message: "ExHentai sent a blank page: this account has no ExHentai access, or igneous is missing." };
+    }
+    const html = htmlBody(res.url || `${this.base()}/favorites.php`, res.status, res.body);
+    if (isLoggedOut(html)) return { ok: false, message: "The site treated these cookies as signed out. Paste fresh ones." };
+    const cats = parseFavoriteCategories(html);
+    const total = cats?.reduce((sum, c) => sum + c.count, 0);
+    return { ok: true, message: total === undefined ? "Signed in" : `Signed in · ${total} favorites` };
   }
 
   private base(): string {
