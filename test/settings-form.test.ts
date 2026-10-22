@@ -1,9 +1,9 @@
 /**
  * Live settings forms (`loadSettings` / `runSettingAction`, contract 2.1): e-hentai names its favorite
- * slots after the account's own categories and checks pasted cookies; nhentai tests an API key.
+ * slots after the account's own categories, signs in on the site and checks the session; nhentai tests an API key.
  */
 import { describe, expect, test } from "bun:test";
-import type { HostCapabilities, HttpRequest, SettingDescriptor, SettingValue } from "@comical/contract";
+import { parseLoginRequired, type HostCapabilities, type HttpRequest, type SettingDescriptor, type SettingValue } from "@comical/contract";
 import ehentai, { parseFavoriteCategories } from "../src/ehentai.ts";
 import nhentai from "../src/nhentai.ts";
 
@@ -87,7 +87,35 @@ describe("e-hentai loadSettings", () => {
   });
 });
 
-describe("e-hentai Check cookies", () => {
+describe("e-hentai sign-in", () => {
+  test("signs in on the forums' own page and keeps the session cookies", async () => {
+    const form = await ehentai(host({}).caps).loadSettings!();
+    const account = form.sections[0]!.items[0] as SettingDescriptor;
+    expect(account).toMatchObject({ type: "web-login", key: "cookies", cookies: ["ipb_member_id", "ipb_pass_hash"] });
+  });
+
+  test("favorites without a session ask for the sign-in", async () => {
+    const { caps, urls } = host({});
+    const err = await ehentai(caps).getFavorites!().catch((e: Error) => e);
+    expect(parseLoginRequired((err as Error).message)?.key).toBe("cookies");
+    expect(urls).toEqual([]);
+  });
+
+  test("a session the site no longer honours asks for the sign-in again", async () => {
+    const { caps } = host(COOKIES, () => ({ body: "This page requires you to log on." }));
+    const err = await ehentai(caps).getFavorites!().catch((e: Error) => e);
+    expect(parseLoginRequired((err as Error).message)?.reason).toContain("Sign in again");
+  });
+
+  test("a whole jar from the sign-in works the same as a paste", async () => {
+    const { caps } = host({ cookies: "ipb_member_id=1; ipb_pass_hash=abc; ipb_session_id=x; sk=y" }, () => ({
+      body: favoritesPage(NAMES),
+    }));
+    expect((await ehentai(caps).runSettingAction!("test-login")).ok).toBe(true);
+  });
+});
+
+describe("e-hentai Check sign-in", () => {
   test("accepted cookies report the account's favorites", async () => {
     const { caps } = host(COOKIES, () => ({ body: favoritesPage(NAMES) }));
     expect(await ehentai(caps).runSettingAction!("test-login")).toEqual({ ok: true, message: "Signed in · 49500 favorites" });
@@ -105,7 +133,7 @@ describe("e-hentai Check cookies", () => {
     expect(result.message).toContain("igneous");
   });
 
-  test("without cookies it asks for them and fetches nothing", async () => {
+  test("signed out it asks for a sign-in and fetches nothing", async () => {
     const { caps, urls } = host({});
     expect((await ehentai(caps).runSettingAction!("test-login")).ok).toBe(false);
     expect(urls).toEqual([]);

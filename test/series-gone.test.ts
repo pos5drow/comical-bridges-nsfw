@@ -175,7 +175,7 @@ describe("e-hentai", () => {
 
     test("signed out, it says to sign in — and isn't gone", async () => {
       const { bridge, urls } = hidden(exGallery, {});
-      await expect(bridge.getSeriesPages!("1:abc")).rejects.toThrow(/only available on ExHentai.*cookies/);
+      await expect(bridge.getSeriesPages!("1:abc")).rejects.toThrow(/\[login-required:cookies\] This gallery is only on ExHentai/);
       expect(await goneReason(bridge.getSeriesPages!("1:abc"))).toBeNull();
       expect(urls.some((u) => u.startsWith("https://exhentai.org/"))).toBe(false);
     });

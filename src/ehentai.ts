@@ -5,8 +5,9 @@
  * structure, so this bridge uses the "direct" capability: `getSeriesPages` returns a
  * flat list of image URLs for each gallery.
  *
- * Auth is cookie-based: the user pastes their e-hentai session cookies into the
- * settings field. Without auth, browsing is limited to the default content filter.
+ * Auth is cookie-based: the user signs in on the forums' own page inside the app, and the
+ * session cookies it sets become the `cookies` setting (a browser tab, which can't read them,
+ * pastes them instead). Without auth, browsing is limited to the default content filter.
  * ExHentai (sadpanda) additionally requires a valid `igneous` cookie.
  *
  * API surface:
@@ -47,6 +48,7 @@ import {
   encodeCursor,
   parseRateLimited,
   rateLimitedMessage,
+  loginRequiredMessage,
   seriesGoneMessage,
 } from "@comical/sdk";
 
@@ -76,14 +78,13 @@ const ALL_CATS_MASK = Object.values(CAT_BITS).reduce((a, b) => a | b, 0); // 102
 
 const SETTINGS = defineSettings([
   {
-    type: "string",
+    type: "web-login",
     key: "cookies",
-    label: "Cookies",
-    description:
-      "Your e-hentai session cookies (needed for favorites and ExHentai). On a browser where you're " +
-      "logged in, open DevTools → Application → Cookies and copy ipb_member_id and ipb_pass_hash " +
-      "(add igneous for ExHentai). You can paste the whole cookie string — only those are used.",
-    secret: true,
+    label: "Account",
+    description: "Sign in for favorites and ExHentai.",
+    url: "https://forums.e-hentai.org/index.php?act=Login",
+    cookies: ["ipb_member_id", "ipb_pass_hash"],
+    cookieUrls: [`${EX_BASE}/`],
   },
   {
     type: "boolean",
@@ -242,9 +243,7 @@ const UNKNOWN_GALLERY = /key missing|incorrect key/i;
  *  galleries get it too, so it's the cue to ask ExHentai rather than to give up (see `galleryHtml`). */
 const UNAVAILABLE_GALLERY = /This gallery has been removed or is unavailable/i;
 
-const EX_ONLY_SIGNED_OUT =
-  "this gallery is only available on ExHentai — paste your e-hentai session cookies " +
-  "(ipb_member_id and ipb_pass_hash) into this bridge's settings to read it";
+const EX_ONLY_SIGNED_OUT = loginRequiredMessage("cookies", "This gallery is only on ExHentai. Sign in to read it.");
 const EX_NO_ACCESS = "this gallery is only available on ExHentai, and your account doesn't have ExHentai access";
 
 /**
@@ -610,7 +609,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       try {
         const html = await this.getHtml(`${this.base()}/favorites.php`);
         const cats = parseFavoriteCategories(html);
-        if (isLoggedOut(html)) favFooter = "Your cookies were treated as signed out, so categories are shown by number.";
+        if (isLoggedOut(html)) favFooter = "The site treated your session as signed out, so categories are shown by number.";
         else if (cats) {
           favcat = {
             ...declared,
@@ -625,7 +624,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     }
     return {
       sections: [
-        { title: "Account", items: [field("cookies"), { type: "action", key: TEST_LOGIN, label: "Check cookies" }] },
+        { title: "Account", items: [field("cookies"), { type: "action", key: TEST_LOGIN, label: "Check sign-in" }] },
         { title: "Site", items: [field("exhentai")] },
         { title: "Favorites", footer: favFooter, items: [favcat] },
       ],
@@ -634,14 +633,14 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
   async runSettingAction(key: string): Promise<SettingActionResult> {
     if (key !== TEST_LOGIN) throw new Error(`unknown settings action "${key}"`);
-    if (!this.signedIn()) return { ok: false, message: "Paste cookies that include ipb_member_id and ipb_pass_hash first." };
+    if (!this.signedIn()) return { ok: false, message: "Sign in first." };
     const res = await this.send({ url: `${this.base()}/favorites.php`, method: "GET", headers: this.headers(true) });
     // ExHentai answers an account without access, or a missing igneous, with an empty 200.
     if (this.setting("exhentai") && res.status < 400 && !res.body.trim()) {
       return { ok: false, message: "ExHentai sent a blank page: this account has no ExHentai access, or igneous is missing." };
     }
     const html = htmlBody(res.url || `${this.base()}/favorites.php`, res.status, res.body);
-    if (isLoggedOut(html)) return { ok: false, message: "The site treated these cookies as signed out. Paste fresh ones." };
+    if (isLoggedOut(html)) return { ok: false, message: "The site treated this session as signed out. Sign in again." };
     const cats = parseFavoriteCategories(html);
     const total = cats?.reduce((sum, c) => sum + c.count, 0);
     return { ok: true, message: total === undefined ? "Signed in" : `Signed in · ${total} favorites` };
@@ -745,11 +744,12 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
   // ── Auth / session ──────────────────────────────────────────────────────────
   // e-hentai's login is gated by Cloudflare + an adaptive reCAPTCHA that always challenges a headless
-  // browser, so there's no way to sign in programmatically. Instead the user pastes the durable session
-  // cookies (ipb_member_id / ipb_pass_hash, + igneous for ExHentai) from a browser that's already logged
-  // in; we extract and inject them on every request. These are long-lived ("stay logged in") cookies.
+  // browser, so there's no way to sign in programmatically. Instead the user signs in on the site in a
+  // web view (or pastes from a browser that already is) and the durable session cookies (ipb_member_id /
+  // ipb_pass_hash, + igneous for ExHentai) are injected on every request. These are long-lived ("stay
+  // logged in") cookies.
 
-  /** The user's pasted cookie blob, parsed to a name→value map. */
+  /** The stored cookie string — the sign-in's whole jar, or a paste — parsed to a name→value map. */
   private parsedCookies(): Record<string, string> {
     return parseCookieString(this.setting("cookies") ?? "");
   }
@@ -773,10 +773,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   /** Throw a clear error when the cookies needed for account features (favorites) aren't set. */
   private requireAuth(): void {
     if (!this.signedIn()) {
-      throw new Error(
-        "favorites require your e-hentai session cookies — on a logged-in browser open DevTools → " +
-          "Application → Cookies and paste ipb_member_id and ipb_pass_hash into this bridge's settings",
-      );
+      throw new Error(loginRequiredMessage("cookies", "Sign in to e-hentai to see your favorites."));
     }
   }
 
@@ -970,9 +967,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
     const html = await this.getHtml(url);
     if (isLoggedOut(html)) {
-      throw new Error(
-        "your e-hentai session has expired or is invalid — paste fresh cookies in this bridge's settings",
-      );
+      throw new Error(loginRequiredMessage("cookies", "Your e-hentai session has ended. Sign in again."));
     }
 
     return this.listingFromHtml(html);
