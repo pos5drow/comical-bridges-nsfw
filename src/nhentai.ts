@@ -20,6 +20,7 @@ import {
   type BridgeInfo,
   type Filter,
   type InfoCell,
+  type LinkTarget,
   type ListRequest,
   type Page,
   type PagedRequest,
@@ -227,8 +228,8 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.2.11",
-    contractVersion: "2.0.0",
+    version: "0.3.0",
+    contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort", "settings", "favorites", "direct", "exclude-tags", "resolve-tags", "related-series"],
@@ -253,6 +254,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
     },
     // Paces a chapter download's page fetches; the reader's own loads aren't held to it.
     assetRateLimit: { maxConcurrent: 3, minIntervalMs: 250 },
+    linkHosts: ["nhentai.net"],
   };
 
   private cdnImageServer: string | undefined;
@@ -557,6 +559,12 @@ class NhentaiBridge extends BridgeBase<Settings> {
   }
 
   // ── Series detail ─────────────────────────────────────────────────────────
+
+  /** A gallery link (`/g/{id}/`, or one of its pages `/g/{id}/{n}/`) carries the id. */
+  async resolveUrl(url: string): Promise<LinkTarget | null> {
+    const m = /^https?:\/\/(?:www\.)?nhentai\.net\/g\/(\d+)(?:[/?#]|$)/i.exec(url);
+    return m ? { seriesId: m[1]! } : null;
+  }
 
   async getSeriesDetails(seriesId: string): Promise<SeriesInfo> {
     // Only fetch the gallery detail on the critical path. CDN config is already warm from

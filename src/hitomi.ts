@@ -34,6 +34,7 @@ import {
   type HttpResponse,
   type ImageRequest,
   type InfoCell,
+  type LinkTarget,
   type ListRequest,
   type Page,
   type PagedResults,
@@ -367,7 +368,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.5.0",
+    version: "0.6.0",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -395,6 +396,7 @@ class HitomiBridge extends BridgeBase {
     // Covers come off the thumbnail host, which takes a grid's worth at once — they'd otherwise
     // queue behind page images for seconds.
     assetRateLimit: { maxConcurrent: 3, minIntervalMs: 300, byHost: [{ hosts: [`tn.${D2}`] }] },
+    linkHosts: ["hitomi.la"],
   };
 
   private gg: { at: number; value: Gg } | undefined;
@@ -476,6 +478,12 @@ class HitomiBridge extends BridgeBase {
   }
 
   /** A page key (`pageKeyUrl`) → the page image's URL under the current gg.js. */
+  /** Gallery links carry the id: `/reader/{id}.html`, `/galleries/{id}.html`, or `/{type}/{slug}-{id}.html`. */
+  async resolveUrl(url: string): Promise<LinkTarget | null> {
+    const id = parseGalleryLink(url);
+    return id ? { seriesId: id } : null;
+  }
+
   async interceptImageRequest(url: string): Promise<ImageRequest> {
     const key = parsePageKey(url);
     if (!key) throw new Error(`Not a page image key: ${url}`);
@@ -1271,6 +1279,16 @@ class HitomiBridge extends BridgeBase {
 }
 
 /** Parse a page key (`pageKeyUrl`). Exported for tests. */
+/** The gallery id a hitomi.la gallery link names, or undefined for any other page (tags, search, index). */
+export function parseGalleryLink(url: string): string | undefined {
+  const path = /^https?:\/\/(?:www\.)?hitomi\.la(\/[^?#]*)/i.exec(url)?.[1];
+  if (!path) return undefined;
+  const m =
+    /^\/(?:reader|galleries)\/(\d+)\.html$/.exec(path) ??
+    /^\/(?:doujinshi|manga|cg|gamecg|imageset|anime|artistcg)\/[^/]*?-?(\d+)\.html$/.exec(path);
+  return m?.[1];
+}
+
 export function parsePageKey(url: string): { hash: string; ext: "webp" | "avif" } | undefined {
   const m = /^https:\/\/([^/]+)\/([0-9a-f]{3,})\.(webp|avif)$/.exec(url);
   if (!m || m[1] !== PAGE_KEY_HOST) return undefined;

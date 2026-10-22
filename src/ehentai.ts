@@ -22,6 +22,7 @@ import {
   type HttpRequest,
   type HttpResponse,
   type ImageRequest,
+  type LinkTarget,
   type InferSettings,
   type InfoCell,
   type ListRequest,
@@ -534,7 +535,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.4.0",
+    version: "0.5.0",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -569,6 +570,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       hosts: ["ehgt.org", "exhentai.org", "hath.network"],
       referer: `${EH_BASE}/`,
     },
+    linkHosts: ["e-hentai.org", "exhentai.org"],
   };
 
   getSettings(): SettingDescriptor[] {
@@ -590,7 +592,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     };
   }
 
-  private resolveUrl(href: string): string {
+  private absoluteUrl(href: string): string {
     return href.startsWith("http") ? href : this.base() + href;
   }
 
@@ -792,7 +794,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // routinely has a full 25 items, so a per-page count would claim another page exists. Deriving
     // the cursor straight from the link means the two can't disagree — no link, no cursor, walk over.
     const nextUrl = paginated ? extractNextUrl(html) : undefined;
-    const nextCursor = nextUrl ? encodeCursor({ url: this.resolveUrl(nextUrl) }) : undefined;
+    const nextCursor = nextUrl ? encodeCursor({ url: this.absoluteUrl(nextUrl) }) : undefined;
 
     if (pairs.length === 0) return { items: [] };
 
@@ -1171,6 +1173,24 @@ class EHentaiBridge extends BridgeBase<Settings> {
   }
 
   /** A page URL emitted by `getSeriesPages` → its image's URL, opened from the viewer page now. */
+  /**
+   * A gallery link (`/g/{gid}/{token}/`, or the multi-page viewer's `/mpv/…`) carries the series id
+   * whole; a page link (`/s/{hash}/{gid}-{n}`) has no token, which the API's `gtoken` looks up.
+   */
+  async resolveUrl(url: string): Promise<LinkTarget | null> {
+    const gallery = parseGalleryLink(url);
+    if (gallery) return { seriesId: gallery };
+    const page = /^https?:\/\/(?:e-hentai|exhentai)\.org\/s\/([0-9a-f]{10,})\/(\d+)-(\d+)(?:[/?#]|$)/i.exec(url);
+    if (!page) return null;
+    const [, hash, gid, n] = page;
+    const res = await this.postJson<{ tokenlist?: { gid?: number; token?: string; error?: string }[] }>(EH_API, {
+      method: "gtoken",
+      pagelist: [[Number(gid), hash!.slice(0, 10).toLowerCase(), Number(n)]],
+    });
+    const token = res.tokenlist?.[0]?.token;
+    return token ? { seriesId: `${gid}:${token}` } : null;
+  }
+
   async interceptImageRequest(url: string): Promise<ImageRequest> {
     const page = parsePageUrl(url);
     if (!page) throw new Error(`Not a page URL: ${url}`);
@@ -1234,6 +1254,12 @@ function viewerUrl(hash: string, gid: number, pageNum: number): string {
  * A page URL `getSeriesPages` emits — a viewer page, or the multi-page viewer at a page — or
  * undefined for anything else. Exported for tests.
  */
+/** The series id (`gid:token`) a gallery or multi-page-viewer link names, or undefined for any other URL. */
+export function parseGalleryLink(url: string): string | undefined {
+  const m = /^https?:\/\/(?:e-hentai|exhentai)\.org\/(?:g|mpv)\/(\d+)\/([0-9a-f]{10})(?:[/?#]|$)/i.exec(url);
+  return m ? `${m[1]}:${m[2]!.toLowerCase()}` : undefined;
+}
+
 export function parsePageUrl(
   url: string,
 ): { gid: number; token?: string; hash?: string; pageNum: number } | undefined {
