@@ -1,13 +1,13 @@
 {
   "registryVersion": "1",
-  "updated": "2026-10-18T23:24:07.220Z",
+  "updated": "2026-10-22T07:09:18.902Z",
   "displayName": "NSFW",
   "bridges": [
     {
       "id": "pos5drow.e-hentai",
       "name": "E-Hentai",
-      "version": "0.3.10",
-      "contractVersion": "2.0.0",
+      "version": "0.5.0",
+      "contractVersion": "2.1.0",
       "languages": [
         "multi"
       ],
@@ -20,8 +20,8 @@
         "direct",
         "favorites"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.e-hentai/0.3.10/bridge.js",
-      "sha256": "480d22324ae5a391dca0b696bd4e63a53e1ac55313e76a390cb2002d2bf01101",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.e-hentai/0.5.0/bridge.js",
+      "sha256": "56e1a94b9b3d3c60a7dc7a3187bef0855de33dd6e71c0bd6233022284a6a7175",
       "iconUrl": "https://e-hentai.org/favicon.ico",
       "assetProxy": {
         "hosts": [
@@ -43,13 +43,28 @@
           }
         ]
       },
-      "signature": "zr8O1ONkccRFhdzkFnY7l4tZEVXeDqHJgtYsLGj4LQx8c1Onztl4jNtk9SaXI6j-ZdOKOyz8qQHvuOX-d2pJDQ"
+      "images": {
+        "hosts": [
+          "e-hentai.org",
+          "exhentai.org",
+          "hath.network",
+          "ehgt.org"
+        ],
+        "intercept": [
+          "e-hentai.org"
+        ]
+      },
+      "linkHosts": [
+        "e-hentai.org",
+        "exhentai.org"
+      ],
+      "signature": "z2aGo1e6Xa3tgdCQJzAIZapbRZy4mAkBKZbjUV5c9T8NE5iivLAph2O0SMqVY_1b70qiB4px0UGSW4Fg8lfDAA"
     },
     {
       "id": "pos5drow.hitomi",
       "name": "Hitomi.la",
-      "version": "0.4.4",
-      "contractVersion": "2.0.0",
+      "version": "0.6.0",
+      "contractVersion": "2.1.0",
       "languages": [
         "multi"
       ],
@@ -64,8 +79,8 @@
         "exclude-tags",
         "resolve-tags"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hitomi/0.4.4/bridge.js",
-      "sha256": "22eb6c183930d20d943f8e12b5a361cf691b43c2a7a9f51c07f07f57e0a6b902",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hitomi/0.6.0/bridge.js",
+      "sha256": "580bd06868a0af905d5aeae7b1436e87ec2ce31ad2b7435aa710014811723916",
       "iconUrl": "https://ltn.gold-usergeneratedcontent.net/favicon-192x192.png",
       "assetProxy": {
         "hosts": [
@@ -85,13 +100,27 @@
           }
         ]
       },
-      "signature": "IoKn3vyAU3Y9wlD0pW17yDt9X8z0TpjXyVpwOm8tzhRGUrk9XQprykGB7uAY77KqrfDLB4KNb6JnqEeGl85QAQ"
+      "images": {
+        "hosts": [
+          "gold-usergeneratedcontent.net"
+        ],
+        "headers": {
+          "Referer": "https://hitomi.la/"
+        },
+        "intercept": [
+          "w1.gold-usergeneratedcontent.net"
+        ]
+      },
+      "linkHosts": [
+        "hitomi.la"
+      ],
+      "signature": "wB0bMj4Ot6oOOhh4MahpdfKOZm9NX9bbVg1GYk97z4hkdJpWSbppGqQm5HG4LfgKhX_7CXenzFmHXU5w6ym5BA"
     },
     {
       "id": "pos5drow.nhentai",
       "name": "nhentai",
-      "version": "0.2.10",
-      "contractVersion": "2.0.0",
+      "version": "0.3.0",
+      "contractVersion": "2.1.0",
       "languages": [
         "multi"
       ],
@@ -108,14 +137,17 @@
         "resolve-tags",
         "related-series"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.nhentai/0.2.10/bridge.js",
-      "sha256": "15eda0eb7f010d21d9b065d5db8b808e020527dc26e6aec53f5688ef86ba6d5a",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.nhentai/0.3.0/bridge.js",
+      "sha256": "3ccb5e8b09dc92027b7d29e4148dd3ebf7ffc0c297e15a077c3047142315d08c",
       "iconUrl": "https://nhentai.net/favicon.png",
       "assetRateLimit": {
         "maxConcurrent": 3,
         "minIntervalMs": 250
       },
-      "signature": "OOIjdh4KKomNbTWG69Iupvrv1QU80Y0Ux9Vo9xigRlUQv4pNrJfRdlcuMrC2fmBRutNSoCQSOFLW7ogLi_JwCA"
+      "linkHosts": [
+        "nhentai.net"
+      ],
+      "signature": "PI6KrCwj9bj2XLQu6nPItwfytc7XpOeMANm7rCY2ovWS2OC4kwTYVFfHxta0u7NeHnIiFq_UUc1oRnuWehKnDQ"
     }
   ],
   "publicKey": "_w_wfsGg94fRKmD6kq4mIHQYReFo7qPcZ9IMwhy0L24",
