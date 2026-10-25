@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 21 KB (500×527) · sampled 8 · failed 0 · bytes min 7 KB / avg 21 KB / median 24 KB / max 29 KB · dims avg 500×527 (max 500×711) · aspect avg 1.09
+**7/10 capabilities** · cover 26 KB (500×519) · sampled 8 · failed 0 · bytes min 12 KB / avg 26 KB / median 26 KB / max 44 KB · dims avg 500×519 (max 500×711) · aspect avg 1.05
 
 > Cloudflare / IP-gated from datacenters
 
@@ -23,17 +23,17 @@ shows ⚠ even for a hard failure.
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
-| ✓ | `search.cursor` | search | nextCursor advanced to 23 further item(s) |
+| ✓ | `search.cursor` | search | nextCursor advanced to 25 further item(s) |
 | ✓ | `filters.descriptors` | filters | getFilters returned 4 filter(s) |
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 124 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 62 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 19 KB (248×303) · sampled 8 · failed 0 · bytes min 11 KB / avg 19 KB / median 17 KB / max 36 KB · dims avg 248×303 (max 250×375) · aspect avg 0.91
+**6/6 capabilities** · cover 20 KB (250×358) · sampled 8 · failed 0 · bytes min 15 KB / avg 20 KB / median 20 KB / max 29 KB · dims avg 250×358 (max 250×375) · aspect avg 0.70
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -45,7 +45,7 @@ shows ⚠ even for a hard failure.
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 41 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 61 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -53,10 +53,10 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 492 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 1852 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `hitomi` — ⚠ (13✓ 1⚠ 0✗)
+## `hitomi` — ✓ (13✓ 0⚠ 0✗)
 
 **5/8 capabilities** · cover — · sampled 0 · failed 8 · bytes min 0 KB / avg 0 KB / median 0 KB / max 0 KB
 
@@ -64,7 +64,6 @@ shows ⚠ even for a hard failure.
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
-| ⚠ | `read.details.description` | core | series details have no description |
 | ✓ | `info.capabilities` | core | declares 8 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 12 list(s) |
 | ✓ | `lists.items` | lists | list "home-popular-today" returned 12 item(s) |
@@ -76,7 +75,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 103 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 30 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-10-24 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-10-25 by the nightly live audit ([`audit.ts`](audit.ts))._
