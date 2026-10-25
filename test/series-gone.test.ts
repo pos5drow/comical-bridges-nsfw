@@ -192,8 +192,13 @@ describe("e-hentai", () => {
     });
   });
 
-  test("getSeriesPages throws gone for a taken-down gallery", async () => {
-    const takedown = host(() => ({ body: "<p>This gallery is unavailable due to a copyright claim by X.</p>" }));
+  test("getSeriesPages throws gone for a taken-down gallery — the site serves the notice as a 404", async () => {
+    const takedown = host(() => ({ status: 404, body: "<p>This gallery is unavailable due to a copyright claim by X.</p>" }));
     expect(await goneReason(ehentaiFactory(takedown).getSeriesPages!("1:abc"))).toBe("Copyright claim by X");
+  });
+
+  test("a 404 that isn't one of the site's gone notices is not gone", async () => {
+    const other = host(() => ({ status: 404, body: "<html>Not Found</html>" }));
+    expect(await goneReason(ehentaiFactory(other).getSeriesPages!("1:abc"))).toBeNull();
   });
 });

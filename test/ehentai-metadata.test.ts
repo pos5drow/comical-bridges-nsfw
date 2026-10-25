@@ -26,6 +26,18 @@ function gdataHost(meta: Record<string, unknown>): HostCapabilities {
 
 const details = (meta: Record<string, unknown>) => factory(gdataHost(meta)).getSeriesDetails("1:abc");
 
+describe("e-hentai cover", () => {
+  test("keeps gdata's thumb as given — the _250 is the largest the CDN serves on the hashed path", async () => {
+    const thumb = "https://ehgt.org/3c/e0/3ce055f1b7378a83b87f2d51e9af47882655c57f-5898436-3000-4000-jpg_250.jpg";
+    expect((await details({ thumb })).thumbnailUrl).toBe(thumb);
+  });
+
+  test("rewrites an s.exhentai.org thumb to the cookie-free CDN", async () => {
+    const info = await details({ thumb: "https://s.exhentai.org/t/w/02/171/00845-tgkzztip.webp" });
+    expect(info.thumbnailUrl).toBe("https://ehgt.org/w/02/171/00845-tgkzztip.webp");
+  });
+});
+
 describe("e-hentai alternate titles", () => {
   test("the Japanese title is an alternate title, not the description", async () => {
     const info = await details({ title_jpn: "主題のギャラリー" });

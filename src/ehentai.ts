@@ -456,11 +456,6 @@ function thumbAspectsFromHtml(html: string): Map<string, number> {
   return aspects;
 }
 
-/** Strip the _250 size suffix for a full-resolution cover (used on the detail page only). */
-function fullSizeThumbUrl(url: string): string {
-  return normalizeThumbUrl(url).replace(/_250\.(\w+)$/, ".$1");
-}
-
 /** One sprite tile's geometry: its rect `{x,y,w,h}` inside the sheet at `src`, plus the sheet's own
  *  pixel size `{sheetWidth,sheetHeight}`. The sheet size is what scales the crop, so it must be the
  *  whole sheet — not the tile — or mixed-size galleries crop the wrong region. */
@@ -556,7 +551,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.5.1",
+    version: "0.5.2",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -698,6 +693,11 @@ class EHentaiBridge extends BridgeBase<Settings> {
     const base = this.exOnly.has(gid) ? EX_BASE : this.base();
     const url = base + path;
     const res = await this.send({ url, method: "GET", headers: this.headers(true) });
+    // The site's "gone" notices (a takedown, an unknown gallery) come with a 404, so they're read
+    // before the status is judged — behind `htmlBody` they'd surface as a generic "HTTP 404" and the
+    // gone signal would never reach the host.
+    const gone = galleryGone(res.body);
+    if (gone) throw gone;
     if (base === EH_BASE && res.body.length < 10_000 && UNAVAILABLE_GALLERY.test(res.body)) {
       if (!this.signedIn()) throw new Error(EX_ONLY_SIGNED_OUT);
       this.exOnly.add(gid);
@@ -1034,7 +1034,10 @@ class EHentaiBridge extends BridgeBase<Settings> {
       shareUrl: `${this.base()}/g/${gid}/${token}/`,
     };
 
-    if (meta?.thumb) info.thumbnailUrl = fullSizeThumbUrl(meta.thumb);
+    // gdata's `thumb` is used as given. For a gallery with the older hashed thumbnail path
+    // (`<hash>-<size>-<w>-<h>-jpg_250.jpg`) the `_250` is the largest the CDN serves — the
+    // suffix-less URL is a 404, so stripping it for a "full-size" cover left the cover blank.
+    if (meta?.thumb) info.thumbnailUrl = normalizeThumbUrl(meta.thumb);
     // The gallery category (Doujinshi / Manga / …) is its type, shown as the Type cell rather than a
     // lone genre chip (it's also painted as a card badge in list/search views).
     if (meta?.category) info.type = meta.category;
@@ -1136,14 +1139,10 @@ class EHentaiBridge extends BridgeBase<Settings> {
     const [gid, token] = parseId(seriesId);
 
     const firstHtml = await this.galleryPage(gid, token);
-    const pageGone = galleryGone(firstHtml);
-    if (pageGone) throw pageGone;
 
     if (offersMpv(firstHtml)) {
       console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV offered, fetching it`);
       const mpvHtml = await this.galleryHtml(gid, `/mpv/${gid}/${token}/`);
-      const mpvGone = galleryGone(mpvHtml);
-      if (mpvGone) throw mpvGone;
       if (!mpvHtml.includes("eeenope")) {
         // dotAll flag handles imagelist JSON that may span multiple lines
         const match = mpvHtml.match(/var imagelist\s*=\s*(\[[\s\S]+?\]);/);
