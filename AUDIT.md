@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 26 KB (500×704) · sampled 8 · failed 0 · bytes min 10 KB / avg 26 KB / median 27 KB / max 38 KB · dims avg 500×704 (max 500×707) · aspect avg 0.71
+**7/10 capabilities** · cover 24 KB (500×611) · sampled 8 · failed 0 · bytes min 7 KB / avg 24 KB / median 25 KB / max 35 KB · dims avg 500×611 (max 500×718) · aspect avg 0.93
 
 > Cloudflare / IP-gated from datacenters
 
@@ -22,29 +22,30 @@ shows ⚠ even for a hard failure.
 | ✓ | `lists.items` | lists | list "popular-now" returned 5 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
-| ✓ | `search.items` | search | search returned 23 item(s) |
+| ✓ | `search.items` | search | search returned 25 item(s) |
 | ✓ | `search.cursor` | search | nextCursor advanced to 25 further item(s) |
 | ✓ | `filters.descriptors` | filters | getFilters returned 4 filter(s) |
-| ✓ | `filters.effect` | filters | filter "language" changed results (23→25) |
+| ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 41 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 38 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `e-hentai` — ⚠ (12✓ 2⚠ 0✗ 1⊘)
+## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 23 KB (242×351) · sampled 8 · failed 0 · bytes min 10 KB / avg 23 KB / median 24 KB / max 35 KB · dims avg 242×351 (max 250×375) · aspect avg 0.70
+**6/6 capabilities** · cover 23 KB (245×286) · sampled 8 · failed 0 · bytes min 12 KB / avg 23 KB / median 21 KB / max 42 KB · dims avg 245×286 (max 250×375) · aspect avg 1.00
 
 > sad-panda / IP + cookie gated from datacenters
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
+| ⚠ | `read.details.author` | core | series details have no author |
 | ⚠ | `read.details.description` | core | series details have no description |
 | ⚠ | `read.details.genres` | core | series details have no genre tag group (kind: "genre") |
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 39 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 43 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -52,7 +53,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 210 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 611 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ⚠ (13✓ 1⚠ 0✗)
@@ -75,7 +76,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 199 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 25 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-10-27 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-10-28 by the nightly live audit ([`audit.ts`](audit.ts))._
