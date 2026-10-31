@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 30 KB (500×626) · sampled 8 · failed 0 · bytes min 19 KB / avg 30 KB / median 28 KB / max 45 KB · dims avg 500×626 (max 500×756) · aspect avg 0.86
+**7/10 capabilities** · cover 29 KB (500×593) · sampled 8 · failed 0 · bytes min 19 KB / avg 29 KB / median 27 KB / max 44 KB · dims avg 500×593 (max 500×764) · aspect avg 0.94
 
 > Cloudflare / IP-gated from datacenters
 
@@ -28,12 +28,12 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 46 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 61 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `e-hentai` — ⚠ (12✓ 2⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 23 KB (250×357) · sampled 8 · failed 0 · bytes min 12 KB / avg 23 KB / median 23 KB / max 30 KB · dims avg 250×357 (max 250×375) · aspect avg 0.70
+**6/6 capabilities** · cover 25 KB (250×333) · sampled 8 · failed 0 · bytes min 6 KB / avg 25 KB / median 27 KB / max 39 KB · dims avg 250×333 (max 250×375) · aspect avg 0.80
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -44,7 +44,7 @@ shows ⚠ even for a hard failure.
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 68 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 54 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -52,7 +52,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 194 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 169 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ⚠ (13✓ 1⚠ 0✗)
@@ -78,4 +78,4 @@ shows ⚠ even for a hard failure.
 | ✓ | `direct.pages` | direct | getSeriesPages returned 161 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-10-30 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-10-31 by the nightly live audit ([`audit.ts`](audit.ts))._
