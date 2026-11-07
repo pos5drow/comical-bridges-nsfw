@@ -46,6 +46,7 @@ import {
   parseFilterIncludeExclude,
   seriesGoneMessage,
 } from "@comical/sdk";
+import { hintsForCategory } from "./cover-hints";
 
 const BASE = "https://nhentai.net/api/v2";
 const IMG_FALLBACK = "https://i1.nhentai.net";
@@ -167,6 +168,25 @@ const LANGUAGE_TAG_IDS: Record<number, string> = {
 };
 
 /**
+ * nhentai's permanent tag ids for the categories its galleries carry, read off a card's inline tag
+ * ids for its cover hints, as the languages are for its badge. Its search finds galleries under only
+ * these two (and Misc); the detail page names any other from its full tags.
+ */
+const CATEGORY_TAG_IDS: Record<number, string> = {
+  33172: "doujinshi",
+  33173: "manga",
+};
+
+/** The category a card's inline tag ids name, if any (`CATEGORY_TAG_IDS`). */
+function categoryOf(tagIds: number[] | undefined): string | undefined {
+  for (const id of tagIds ?? []) {
+    const category = CATEGORY_TAG_IDS[id];
+    if (category) return category;
+  }
+  return undefined;
+}
+
+/**
  * Language badge for a card from its inline tag ids, anchored bottom-right and shown as a terse
  * abbreviation ("EN", "JP"); none when no language is tagged.
  */
@@ -231,7 +251,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.nhentai",
     name: "nhentai",
-    version: "0.3.1",
+    version: "0.3.2",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -382,6 +402,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
     const entry: SeriesEntry = {
       id: String(item.id),
       title: listItemTitle(item),
+      ...hintsForCategory(categoryOf(item.tag_ids)),
     };
     if (item.thumbnail) {
       entry.thumbnailUrl = cdnUrl(item.thumbnail, thumb);
@@ -631,6 +652,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
     // surface it as the Type cell so it doesn't render as a lone genre chip.
     const categories = byType.get("category");
     if (categories?.length) info.type = categories[0];
+    Object.assign(info, hintsForCategory(categories?.[0]));
 
     const tagGroups: TagGroup[] = [];
 

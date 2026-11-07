@@ -51,6 +51,7 @@ import {
   loginRequiredMessage,
   seriesGoneMessage,
 } from "@comical/sdk";
+import { hintsForCategory } from "./cover-hints";
 
 const EH_BASE = "https://e-hentai.org";
 const EX_BASE = "https://exhentai.org";
@@ -551,7 +552,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.5.2",
+    version: "0.5.3",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -887,7 +888,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
       // Expunged/superseded galleries (struck-through date in favorites) still carry a valid title and
       // thumbnail and remain viewable — only a genuine API error means there's no data to show.
       if (!meta || meta.error) return { id, title: id };
-      const entry: SeriesEntry = { id, title: meta.title ?? id };
+      const entry: SeriesEntry = { id, title: meta.title ?? id, ...hintsForCategory(meta.category) };
       if (meta.thumb) {
         entry.thumbnailUrl = normalizeThumbUrl(meta.thumb);
         const aspect = thumbAspects.get(entry.thumbnailUrl);
@@ -1041,6 +1042,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     // The gallery category (Doujinshi / Manga / …) is its type, shown as the Type cell rather than a
     // lone genre chip (it's also painted as a card badge in list/search views).
     if (meta?.category) info.type = meta.category;
+    Object.assign(info, hintsForCategory(meta?.category));
     const japanese = meta?.title_jpn?.trim();
     if (japanese && japanese !== info.title) info.altTitles = [japanese];
 

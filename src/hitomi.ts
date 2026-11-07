@@ -57,6 +57,7 @@ import {
   retryAfterMs,
   seriesGoneMessage,
 } from "@comical/sdk";
+import { hintsForCategory } from "./cover-hints";
 import { LANGUAGES } from "./hitomi/languages.ts";
 import {
   CARD_VISIBLE_NS,
@@ -368,7 +369,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.6.1",
+    version: "0.6.2",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -657,6 +658,14 @@ class HitomiBridge extends BridgeBase {
       for (const facet of facets) {
         if (facet.startsWith("language:")) {
           entry.badges = [{ text: abbreviateLanguage(facet.slice(9)), position: "bottom-right", tone: "info" }];
+          break;
+        }
+      }
+
+      // The card's Type row links `type/<kind>`, already parsed into `facets`.
+      for (const facet of facets) {
+        if (facet.startsWith("type:")) {
+          Object.assign(entry, hintsForCategory(facet.slice(5)));
           break;
         }
       }
@@ -1153,6 +1162,7 @@ class HitomiBridge extends BridgeBase {
     const info: SeriesInfo = { id: seriesId, title: g.title || seriesId, shareUrl: `${SITE}/reader/${seriesId}.html` };
     if (g.files[0]?.hash) info.thumbnailUrl = this.coverUrl(g.files[0].hash);
     if (g.type) info.type = TYPE_LABELS[g.type] ?? g.type;
+    Object.assign(info, hintsForCategory(g.type));
     if (g.files.length) info.pageCount = g.files.length;
 
     const japanese = g.japanese_title?.trim();
