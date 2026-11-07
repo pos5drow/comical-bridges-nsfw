@@ -20,13 +20,12 @@ describe("cover hints from a gallery's category", () => {
 
   test("picture sets are sheets, and bind on no edge", () => {
     // E-Hentai's names, then Hitomi's and nhentai's slugs.
-    for (const category of ["Artist CG", "Game CG", "Image Set", "Cosplay", "Asian Porn", "artistcg", "gamecg", "imageset", "anime"]) {
+    for (const category of ["Artist CG", "Game CG", "Image Set", "Cosplay", "Asian Porn", "Misc", "artistcg", "gamecg", "imageset", "anime"]) {
       expect(hintsForCategory(category)).toEqual({ coverForm: "sheets" });
     }
   });
 
-  test("Misc, an unknown category, or none says nothing", () => {
-    expect(hintsForCategory("Misc")).toEqual({});
+  test("an unknown category, or none, says nothing", () => {
     expect(hintsForCategory("Private")).toEqual({});
     expect(hintsForCategory(undefined)).toEqual({});
   });
