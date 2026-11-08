@@ -34,11 +34,11 @@ flaky — these sites IP-gate datacenter (CI runner) addresses even when they wo
 <!-- BRIDGE-STATUS:START -->
 | Bridge | Status | Capabilities | Avg cover | Notes |
 |---|---|---|---|---|
-| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 28 KB (500×651) | Cloudflare / IP-gated from datacenters |
-| `e-hentai` | ⚠ (11✓ 3⚠ 1✗ 1⊘) | 6/6 | 18 KB (250×241) | flaky (tolerated): sad-panda / IP + cookie gated from datacenters |
+| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 30 KB (500×673) | Cloudflare / IP-gated from datacenters |
+| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 19 KB (243×293) | sad-panda / IP + cookie gated from datacenters |
 | `hitomi` | ⚠ (13✓ 1⚠ 0✗) | 5/8 | — | images need the host /img-proxy (Referer-gated), unavailable in the audit |
 
-_Updated 2026-11-07 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-08 by the nightly live audit ([`audit.ts`](audit.ts))._
 <!-- BRIDGE-STATUS:END -->
 
 ## Develop

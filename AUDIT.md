@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 28 KB (500×651) · sampled 8 · failed 0 · bytes min 12 KB / avg 28 KB / median 30 KB / max 37 KB · dims avg 500×651 (max 500×716) · aspect avg 0.86
+**7/10 capabilities** · cover 30 KB (500×673) · sampled 8 · failed 0 · bytes min 16 KB / avg 30 KB / median 29 KB / max 48 KB · dims avg 500×673 (max 500×767) · aspect avg 0.78
 
 > Cloudflare / IP-gated from datacenters
 
@@ -28,32 +28,32 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 197 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 64 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `e-hentai` — ⚠ (11✓ 3⚠ 1✗ 1⊘)
+## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 18 KB (250×241) · sampled 8 · failed 0 · bytes min 7 KB / avg 18 KB / median 19 KB / max 24 KB · dims avg 250×241 (max 250×348) · aspect avg 1.16
+**6/6 capabilities** · cover 19 KB (243×293) · sampled 8 · failed 0 · bytes min 6 KB / avg 19 KB / median 21 KB / max 27 KB · dims avg 243×293 (max 250×375) · aspect avg 0.94
 
-> flaky (tolerated): sad-panda / IP + cookie gated from datacenters
+> sad-panda / IP + cookie gated from datacenters
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
-| ✗ | `lists.idStability` | lists | list "popular" item ids are not stable across identical calls |
 | ⚠ | `read.details.author` | core | series details have no author |
 | ⚠ | `read.details.description` | core | series details have no description |
 | ⚠ | `read.details.genres` | core | series details have no genre tag group (kind: "genre") |
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 65 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 45 item(s) |
+| ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
 | ✓ | `search.cursor` | search | nextCursor advanced to 25 further item(s) |
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 285 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 1294 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ⚠ (13✓ 1⚠ 0✗)
@@ -64,7 +64,7 @@ shows ⚠ even for a hard failure.
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
-| ⚠ | `read.details.author` | core | series details have no author |
+| ⚠ | `read.details.description` | core | series details have no description |
 | ✓ | `info.capabilities` | core | declares 8 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 12 list(s) |
 | ✓ | `lists.items` | lists | list "home-popular-today" returned 12 item(s) |
@@ -76,7 +76,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 50 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 460 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-_Updated 2026-11-07 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-08 by the nightly live audit ([`audit.ts`](audit.ts))._
