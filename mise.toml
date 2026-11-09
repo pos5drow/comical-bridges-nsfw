@@ -1,0 +1,3 @@
+# The repo's toolchain: the Bun CI builds and publishes with (.github/workflows/publish.yml).
+[tools]
+bun = "1.3.14"
