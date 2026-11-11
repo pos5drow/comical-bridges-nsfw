@@ -534,6 +534,12 @@ function spriteThumb(t: SpriteTile): PageThumbnail {
 const VIEWER_PAGE_SIZE = 20;
 /** How long a gallery page fetched for one open is reused by the other calls of that open. */
 const GALLERY_PAGE_TTL_MS = 30_000;
+/**
+ * How long after serving a page a second ask for it counts as a retry. The host remembers what the
+ * interceptor answered for 10 minutes and only asks again inside that when the image failed to load
+ * (`refresh`), so an ask this soon means the H@H server it was sent to is dead or stalled.
+ */
+const RETRY_WINDOW_MS = 10 * 60_000;
 
 class EHentaiBridge extends BridgeBase<Settings> {
   // Cache for viewer-page hashes: key = `${gid}:${viewerPageIndex}`, value = pageNum → hash.
@@ -546,13 +552,15 @@ class EHentaiBridge extends BridgeBase<Settings> {
   private readonly exOnly = new Set<number>();
   // Each gallery's front page, briefly, keyed by gid — see `galleryPage`.
   private readonly galleryPages = new Map<number, { at: number; html: Promise<string> }>();
+  // Each page's last viewer-page answer, keyed by `{gid}-{n}`: when, and its `nl` key — see `pageImageUrl`.
+  private readonly served = new Map<string, { at: number; nl: string | undefined }>();
   // Until when (epoch ms) the site has told us to back off — see `send`.
   private holdUntil = 0;
 
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.5.4",
+    version: "0.5.5",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -1270,7 +1278,14 @@ class EHentaiBridge extends BridgeBase<Settings> {
     return this.pageImageUrl(gid, token, hash === "_" ? undefined : hash, pageNum);
   }
 
-  /** Open a page's viewer page for its image URL, looking its hash up first when it isn't known. */
+  /**
+   * Open a page's viewer page for its image URL, looking its hash up first when it isn't known.
+   *
+   * A viewer page names the same H@H server every time it's opened, so a retry that just reopened it
+   * went straight back to the server whose image had failed — each retry spending a slot of the
+   * `/s/` budget the pages behind it were waiting on. A retry (see `RETRY_WINDOW_MS`) opens it with
+   * the page's `nl` key instead, the site's own "Reload broken image", which assigns another server.
+   */
   private async pageImageUrl(
     gid: number,
     token: string | undefined,
@@ -1291,24 +1306,45 @@ class EHentaiBridge extends BridgeBase<Settings> {
     }
 
     const pagePath = `/s/${hash}/${gidRef}`;
-    const pageHtml = await this.galleryHtml(gid, pagePath);
+    const now = Date.now();
+    for (const [ref, entry] of this.served) {
+      if (now - entry.at >= RETRY_WINDOW_MS) this.served.delete(ref);
+    }
+    const prevNl = this.served.get(gidRef)?.nl;
+    if (prevNl) console.log(`[e-hentai] page ${gidRef}: asked again, so its image failed; asking for another server`);
+    const pageHtml = await this.galleryHtml(gid, prevNl ? withNl(pagePath, prevNl) : pagePath);
     const imageUrl = extractImageUrl(pageHtml);
     const refusal = sourceRefusal(pageHtml, imageUrl);
     if (refusal) throw refusal;
-    if (imageUrl) return imageUrl;
+    const nl = extractNl(pageHtml);
+    if (imageUrl) {
+      this.served.set(gidRef, { at: now, nl });
+      return imageUrl;
+    }
     // Image URL missing — CDN assignment may have expired; retry with nl token if present
-    const nlMatch = pageHtml.match(/return nl\('([^']+)'\)/);
-    if (nlMatch) {
+    if (nl) {
       console.log(`[e-hentai] page ${gidRef}: image URL missing, retrying with nl token`);
-      const retryHtml = await this.galleryHtml(gid, `${pagePath}?nl=${encodeURIComponent(nlMatch[1]!)}`);
+      const retryHtml = await this.galleryHtml(gid, withNl(pagePath, nl));
       const retryUrl = extractImageUrl(retryHtml);
       const retryRefusal = sourceRefusal(retryHtml, retryUrl);
       if (retryRefusal) throw retryRefusal;
-      if (retryUrl) return retryUrl;
+      if (retryUrl) {
+        this.served.set(gidRef, { at: now, nl: extractNl(retryHtml) });
+        return retryUrl;
+      }
     }
     console.error(`[e-hentai] page ${gidRef}: could not extract image URL`);
     throw new Error(`Could not extract image URL for page ${gidRef}`);
   }
+}
+
+/** A viewer page's "Reload broken image" key: opened with it, the page names another H@H server. */
+function extractNl(html: string): string | undefined {
+  return html.match(/return nl\('([^']+)'\)/)?.[1];
+}
+
+function withNl(pagePath: string, nl: string): string {
+  return `${pagePath}?nl=${encodeURIComponent(nl)}`;
 }
 
 /** A page's viewer page. */

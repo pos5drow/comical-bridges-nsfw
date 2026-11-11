@@ -166,6 +166,44 @@ describe("page URLs", () => {
   });
 });
 
+describe("a page asked for again", () => {
+  const PAGE = `https://e-hentai.org/s/abc1/${GID}-1`;
+  const viewer = (server: string, nl: string) =>
+    `<img id="img" src="https://${server}.hath.network/h/1.jpg" /><a href="#" onclick="return nl('${nl}')">Reload broken image</a>`;
+
+  test("is sent to another H@H server, chaining each answer's nl key", async () => {
+    const { bridge, urls } = recordingHost((u) => {
+      const nl = new URL(u).searchParams.get("nl");
+      return nl === null ? viewer("dead", "k1") : viewer(`after-${nl}`, `${nl}x`);
+    });
+    expect((await bridge.interceptImageRequest!(PAGE)).url).toBe("https://dead.hath.network/h/1.jpg");
+    expect((await bridge.interceptImageRequest!(PAGE)).url).toBe("https://after-k1.hath.network/h/1.jpg");
+    expect((await bridge.interceptImageRequest!(PAGE)).url).toBe("https://after-k1x.hath.network/h/1.jpg");
+    expect(urls).toEqual([PAGE, `${PAGE}?nl=k1`, `${PAGE}?nl=k1x`]);
+  });
+
+  test("other pages and a first ask open the plain viewer page", async () => {
+    const { bridge, urls } = recordingHost(() => viewer("a", "k1"));
+    await bridge.interceptImageRequest!(PAGE);
+    await bridge.interceptImageRequest!(`https://e-hentai.org/s/abc2/${GID}-2`);
+    expect(urls.every((u) => !u.includes("nl="))).toBe(true);
+  });
+
+  test("a failed ask leaves the next one plain", async () => {
+    let fail = true;
+    const { bridge, urls } = recordingHost(() => {
+      if (fail) {
+        fail = false;
+        throw new Error("network down");
+      }
+      return viewer("a", "k1");
+    });
+    await expect(bridge.interceptImageRequest!(PAGE)).rejects.toThrow("network down");
+    await bridge.interceptImageRequest!(PAGE);
+    expect(urls).toEqual([PAGE, PAGE]);
+  });
+});
+
 describe("the too-fast hold", () => {
   test("after the warning, every request fails fast as rate-limited without reaching the site", async () => {
     const { bridge, urls } = recordingHost(() => TOO_FAST);
