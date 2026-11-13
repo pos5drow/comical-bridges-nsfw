@@ -560,7 +560,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
   readonly info: BridgeInfo = {
     id: "pos5drow.e-hentai",
     name: "E-Hentai",
-    version: "0.5.5",
+    version: "0.5.6",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,
@@ -568,16 +568,15 @@ class EHentaiBridge extends BridgeBase<Settings> {
     ratings: true,
     iconUrl: `${EH_BASE}/favicon.ico`,
     // The site bans IPs for page-load bursts well short of what a reader or a download produces at
-    // full speed. Requests go one at a time a second apart, and the per-page viewer (/s/, one per
-    // image — what a reader or a download hammers) is held to 5 per 15s on top: the same long-run
-    // 1 per 3s as before, but a reader opening on a page can resolve it and the next few without
-    // waiting 3s for each. Opening a gallery (its metadata, then its page) no longer pays that 3s
-    // gap per request. The site's too-fast warning, should this still draw one, holds the bridge
-    // (see `send`).
+    // full speed, but publishes no rate, and warns first: "opening pages too fast", which holds the
+    // bridge (see `send`) — the ban is for pressing on through it. Requests go one at a time half a
+    // second apart, and the per-page viewer (/s/, one per image — what a reader or a download
+    // hammers) is held to 10 per 10s on top, about a reader paging steadily. The 1-per-3s this
+    // replaced was a guess that never drew a warning, and left a reader waiting on every page.
     rateLimit: {
       maxConcurrent: 1,
-      minIntervalMs: 1000,
-      routes: [{ match: "/s/**", limit: 5, windowMs: 15_000 }],
+      minIntervalMs: 500,
+      routes: [{ match: "/s/**", limit: 10, windowMs: 10_000 }],
     },
     // The thumbnail CDN isn't what gets an IP banned (the viewer pages and H@H images are), so
     // proxied thumbnails aren't held to the page pacing.
