@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T09:57:10.627Z",
+  "updated": "2026-11-15T10:01:01.551Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -229,6 +229,36 @@
         "nhentai.net"
       ],
       "signature": "MAV10DfDhGDODxidRZJAgvVSHjpWVqV0OesnLf0M-uf8Q4STW4NZWVNS0_rQV2MZ2MXru7pEWajYVLt1Aaj2Ag"
+    },
+    {
+      "id": "pos5drow.wnacg",
+      "name": "紳士漫畫 (wnacg)",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "zh"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.wnacg/0.1.0/bridge.js",
+      "sha256": "fd48b0468c9a1fa9b713706bae3198fcb48a1303764633f441c54419fc257934",
+      "iconUrl": "https://www.wnacg.buzz/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "linkHosts": [
+        "wnacg.buzz",
+        "wnacg.site",
+        "wnacg.com"
+      ],
+      "signature": "4GKZR2CPxAakqfnZ48dAmk61xChT9p5poduXMqCWLzBhSbsECVgubikROHMd3fnmhcPgP5EOvOnarcKFM08TBw"
     }
   ],
   "publicKey": "_w_wfsGg94fRKmD6kq4mIHQYReFo7qPcZ9IMwhy0L24",
