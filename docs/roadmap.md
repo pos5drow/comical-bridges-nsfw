@@ -14,8 +14,8 @@ Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (gal
 | Source | Site | Engine | Upstream refs | Signals | Blockers | Status |
 |---|---|---|---|---|---|---|
 | HDoujin | hdoujin.org | bespoke | kei `all/hdoujin` | 17 👍 request | JS-SOLVER? (kei uses a WebView — investigate) | todo |
-| Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | — | todo |
-| Coomer | coomer.st | **kemono** | kei `all/coomer` | same engine as Kemono | — | todo |
+| Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | DDoS-Guard; the creator list is one 12.5 MB JSON (too heavy to fetch per search on a phone). Probing for lighter endpoints was **declined by the permission check** (2026-11-15) | paused (needs your go-ahead) |
+| Coomer | coomer.st | **kemono** | kei `all/coomer` | same engine as Kemono | real people's paywalled explicit content (OnlyFans, Fansly) redistributed without their consent | **dropped** (see below) |
 | Pawchive | pawchive.pw | bespoke ("Kemono alternative") | kei `all/pawchive` | 14 👍 request | check whether its API matches Kemono's; if so it joins the kemono engine | todo |
 | MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | — | todo |
 | Hentai2Read | hentai2read.com | bespoke | aidoku `en.hentai2read` (not in Keiyoushi) | in Aidoku | — | todo |
@@ -44,6 +44,13 @@ bundle's bytes change only when its code does.
 - **IMHentai:** Cloudflare challenges the Node/Bun TLS fingerprint (curl and phone stacks pass), so
   it was built from pages fetched by hand; its engine is live-verified through HentaiFox. Needs the
   SFW repo's **TLS-FINGERPRINT** answer (check on a phone first).
+
+## Skipped, and why
+
+| Source | Why | What would change that |
+|---|---|---|
+| Coomer | It republishes real people's paywalled explicit photos and videos (OnlyFans, Fansly, CandFans) without their consent. Unlike the drawn-art and doujinshi sites here, building a client for it means helping spread intimate imagery of real, identifiable people against their will. Not built. | Nothing on the technical side; this is a content decision. |
+| Kemono (paused) | Archives paywalled drawn art (Patreon, Fanbox…), like the other aggregators. Its API sits behind DDoS-Guard, which asks scrapers to send `Accept: text/css`; the creator list comes as one 12.5 MB JSON. A sweep of its API endpoints, looking for a lighter search, was declined by the session's permission check as unauthorized access. | The user's go-ahead to probe the API; then a bridge that searches without pulling the whole list on every query (or caches it). Pawchive waits on the same decision. |
 
 ## Suggested build order
 
