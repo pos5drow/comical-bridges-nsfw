@@ -156,6 +156,12 @@ export function pickWidth(sets: DataSets, wanted: string): { width: Width; id: n
 }
 
 export class SchaleBridge extends BridgeBase {
+  /** The platform User-Agent when the host gives a browser one (the web check's web view sends it too), else a fixed desktop Chrome one. */
+  private get ua(): string {
+    const host = this.userAgent;
+    return host && host.startsWith("Mozilla/5.0") ? host : UA;
+  }
+
   readonly info: BridgeInfo;
   private readonly guards: ReturnType<typeof standardGuards>;
   private readonly api: string;
@@ -206,7 +212,7 @@ export class SchaleBridge extends BridgeBase {
   }
 
   private headers(): Record<string, string> {
-    return { "User-Agent": UA, Accept: "application/json", Origin: this.cfg.site, Referer: `${this.cfg.site}/` };
+    return { "User-Agent": this.ua, Accept: "application/json", Origin: this.cfg.site, Referer: `${this.cfg.site}/` };
   }
 
   private json<T>(res: HttpResponse, what: string): T {
@@ -232,7 +238,7 @@ export class SchaleBridge extends BridgeBase {
     return new Error(
       challengeMessage({
         url: `${this.cfg.site}/`,
-        userAgent: UA,
+        userAgent: this.ua,
         storage: [CLEARANCE],
         reason: `${this.cfg.name} wants to check this is a person before showing pages`,
       }),

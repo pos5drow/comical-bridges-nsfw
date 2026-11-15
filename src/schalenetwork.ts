@@ -8,7 +8,7 @@ import { schaleSite } from "./engines/schale";
 export default schaleSite({
   id: "schalenetwork",
   name: "Schale Network",
-  version: "0.1.0",
+  version: "0.1.1",
   site: "https://niyaniya.moe",
   apiDomain: "schale.network",
   languages: [
