@@ -24,4 +24,5 @@ export const AUDIT: Record<string, BridgeAuditConfig> = {
   // Cloudflare challenges the Node/Bun TLS fingerprint (curl and phone stacks pass).
   imhentai: { searchQuery: "full color", settings: { adult: "true" }, flaky: "Cloudflare challenges the Bun/Node TLS fingerprint" },
   hentai2read: { searchQuery: "villain", settings: { adult: "true" }, flaky: "Cloudflare challenges the Bun/Node TLS fingerprint" },
+  wnacg: { searchQuery: "全彩", settings: { adult: "true" } },
 };
