@@ -14,13 +14,13 @@ Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (gal
 
 | Source | Site | Engine | Upstream refs | Signals | Blockers | Status |
 |---|---|---|---|---|---|---|
-| HDoujin | hdoujin.org | bespoke | kei `all/hdoujin` | 17 👍 request | API needs a `crt` clearance token the site puts in the browser's localStorage after its own check; Keiyoushi asks the user to open a WebView and reads it there | blocked (needs a user-driven web check) |
+| HDoujin | hdoujin.org | bespoke | kei `all/hdoujin` | 17 👍 request | Browsing and details are open; pages need the site's `crt` clearance token, which its home page's Turnstile leaves in localStorage `clearance` | **built** (pages via the page-storage web check; untested on a device) |
 | Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | creator list is one ~12 MB JSON (no server-side creator search): fetched once, kept 30 min, compacted. Full-size file servers often unreachable: thumbnails by default | **shipped 0.1.0** (live audit passes) |
 | Coomer | coomer.st | **kemono** | kei `all/coomer` | same engine as Kemono | real people's paywalled explicit content (OnlyFans, Fansly) redistributed without their consent | **dropped** (see below) |
 | Pawchive | pawchive.pw | **kemono** (same API) | kei `all/pawchive` | 14 👍 request | its file servers ask scripts for an honest User-Agent and ≤1 req/s, ≤5 downloads, and block browser impersonation: the bridge identifies itself and keeps to that, and gets full-size files | **shipped 0.1.0** (live audit passes) |
 | MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | **CF-CLEARANCE**: "Verification Required" challenge on every page, even for curl (2026-11-15) | blocked |
 | Hentai2Read | hentai2read.com | bespoke (Inertia app: page data embedded as JSON) | aidoku `en.hentai2read` (not in Keiyoushi) | in Aidoku | **TLS-FINGERPRINT**: built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
-| Schale Network | niyaniya.moe | bespoke | kei `all/schalenetwork` | in Keiyoushi | API needs a `crt` token minted from a solved Turnstile captcha; Keiyoushi solves it automatically | blocked (captcha; not solved automatically) |
+| Schale Network | niyaniya.moe | bespoke | kei `all/schalenetwork` | in Keiyoushi | Same engine and token as HDoujin (Keiyoushi mints the token by solving the Turnstile itself; here the person or Cloudflare's own non-interactive check passes it in the web check) | **built** (as HDoujin) |
 | IMHentai | imhentai.xxx | **galleryadults** | kei `all/imhentai` | in Keiyoushi | **TLS-FINGERPRINT** (Cloudflare challenges Node/Bun; curl passes): built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
 | HentaiFox | hentaifox.com | **galleryadults** | kei `all/hentaifox` | in Keiyoushi | — | **shipped 0.1.0** (live audit passes) |
 | wnacg | wnacg.buzz / .site (mirrors in settings) | bespoke (zh) | kei `zh/wnacg`, aidoku `zh.wnacg` | in both | — (some categories need sign-in; photo/cosplay category left out on purpose) | **shipped 0.1.0** (live audit passes) |
@@ -33,7 +33,7 @@ own card selectors in the site config. Not on the list; candidates once the list
 
 ## Blocked or partly blocked
 
-Known risks from the survey: HDoujin, Schale Network and wnacg may need
+Known risks from the survey: wnacg may need
 **JS-SOLVER** or **CF-CLEARANCE** (see `comical-bridges/docs/roadmap.md`, "Blocked or partly
 blocked", for what those would take). JMComic's strip shuffle is covered by processed page images.
 Its encrypted API still needs investigating.
@@ -42,6 +42,13 @@ E-Hentai, Hitomi and nhentai got patch bumps with the first push here (the comic
 had changed every bundle), and `build.ts` now drops Bun's `debugId` line, as in the SFW repo, so a
 bundle's bytes change only when its code does.
 
+- **HDoujin and Schale Network** (built 2026-11-15, `engines/schale.ts`): one front end and one
+  API. Browsing, search and details need no token. Pages call `POST /books/detail/{id}/{key}?crt`
+  for the image sets and `GET /books/data/…?crt` for the pages. With no token, or on the API's
+  empty 403 for a bad one, the bridge raises a web check of the home page with
+  `storage: ["clearance"]`, and reads the value back from `webCheckStorageKey("clearance")`.
+  Verified against the live open endpoints and, end to end, through core with a mock; the token
+  flow itself still needs a device. The image CDN wants the site's `Origin`, declared in `images`.
 - **IMHentai:** Cloudflare challenges the Node/Bun TLS fingerprint (curl and phone stacks pass), so
   it was built from pages fetched by hand; its engine is live-verified through HentaiFox. Needs the
   SFW repo's **TLS-FINGERPRINT** answer (check on a phone first).
@@ -52,8 +59,6 @@ bundle's bytes change only when its code does.
 |---|---|---|
 | Coomer | It republishes real people's paywalled explicit photos and videos (OnlyFans, Fansly, CandFans) without their consent. Unlike the drawn-art and doujinshi sites here, building a client for it means helping spread intimate imagery of real, identifiable people against their will. Not built. | Nothing on the technical side; this is a content decision. |
 | MyReadingManga | Cloudflare's "Verification Required" challenge on every page, even for curl. | CF-CLEARANCE (the user passes the check in an in-app web view). |
-| HDoujin | Its API needs a `crt` token the site writes to the browser's localStorage after its own check; without a browser there is no token. | A user-driven web check that hands a localStorage value back to the bridge: built (comical 29f584c; the bridge names `storage: ["clearance"]` on its challenge and reads `webCheckStorageKey`). Still needs the bridge, studied through a cleared session. |
-| Schale Network | Its API token is minted from a solved Turnstile captcha, which Keiyoushi solves automatically. Not done here. | The same user-driven web check, now built: the user solves it and the app passes the token on. Still needs the bridge. |
 | wnacg photo/cosplay category | Real people, not drawn work; left out of the category filter for the same reason as Coomer. The rest of the site is built. | A content decision, not a technical one. |
 
 ## Notes from building
@@ -84,5 +89,5 @@ bundle's bytes change only when its code does.
 1. galleryadults engine → IMHentai, HentaiFox.
 2. kemono engine → Kemono, Pawchive (done; Coomer dropped).
 3. MyReadingManga, Hentai2Read.
-4. After the JS-SOLVER investigations: HDoujin, Schale Network, wnacg.
+4. After the JS-SOLVER investigations: wnacg (HDoujin and Schale Network are built).
 5. After IMG-TILES lands: JMComic.

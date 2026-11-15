@@ -28,4 +28,8 @@ export const AUDIT: Record<string, BridgeAuditConfig> = {
   jmcomic: { searchQuery: "百合", settings: { adult: "true" } },
   kemono: { searchQuery: "maple", settings: { adult: "true" } },
   pawchive: { searchQuery: "maple", settings: { adult: "true" } },
+  // Browsing and details are open; pages need the site's clearance token from a person's web
+  // check, which the audit can't do, so the page probes end in a challenge.
+  hdoujin: { searchQuery: "maid", settings: { adult: "true" }, flaky: "pages need a clearance token from a web check" },
+  schalenetwork: { searchQuery: "maid", settings: { adult: "true" }, flaky: "pages need a clearance token from a web check" },
 };

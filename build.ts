@@ -28,6 +28,8 @@ const bridges: Array<{ id: string; src: string }> = [
   { id: "jmcomic", src: "jmcomic.ts" },
   { id: "kemono", src: "kemono.ts" },
   { id: "pawchive", src: "pawchive.ts" },
+  { id: "hdoujin", src: "hdoujin.ts" },
+  { id: "schalenetwork", src: "schalenetwork.ts" },
 ];
 
 for (const { id, src } of bridges) {
