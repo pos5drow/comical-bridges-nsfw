@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T10:01:01.551Z",
+  "updated": "2026-11-15T10:07:02.151Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -196,6 +196,47 @@
         "imhentai.xxx"
       ],
       "signature": "py_EpFP3I47KBw_GArH2qDWFg7xmLQ87v3yZo4kP0k3Zk2JUtxNxePAVbCMqn9vhY-i51cpeI64Apsa8lB_fBw"
+    },
+    {
+      "id": "pos5drow.jmcomic",
+      "name": "禁漫天堂 (JMComic)",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "zh"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.jmcomic/0.1.0/bridge.js",
+      "sha256": "ce8823b88b55599f2de0fc53dc59e4adc7a94e1d4aa317741ee201803273a40d",
+      "iconUrl": "https://18comic.ink/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "images": {
+        "hosts": [
+          "18comic.ink",
+          "18comic.vip",
+          "jmcomic-zzz.one",
+          "jmcomic-zzz.org"
+        ],
+        "process": {
+          "layout": true
+        }
+      },
+      "linkHosts": [
+        "18comic.ink",
+        "18comic.vip",
+        "jmcomic-zzz.one",
+        "jmcomic-zzz.org"
+      ],
+      "signature": "HnfS3j7rqLwTsU2Iu7nfsZ-g9GCRyBi5apfQKelxCGUTrlnCH987q6bREaTge9Yk6wYzzGi6QqO0IJo6DjXYBg"
     },
     {
       "id": "pos5drow.nhentai",
