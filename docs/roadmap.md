@@ -5,7 +5,8 @@ the shared-engine design and the maintenance plan are all written up in the SFW 
 (`comical-bridges/docs/roadmap.md`, `shared-engines.md`, `maintenance.md`). This file only tracks
 this repo's targets.
 
-**Update this file in the same commit that changes a bridge's status.**
+**Update this file in the same commit that changes a bridge's status.** Open follow-ups for both
+repos (web check, phone checks, decisions) are listed in the SFW roadmap, "Open follow-ups".
 
 Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine), Hentai2Read, wnacg, JMComic, Kemono and Pawchive (kemono engine).
 
