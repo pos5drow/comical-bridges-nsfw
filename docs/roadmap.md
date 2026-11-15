@@ -7,7 +7,7 @@ this repo's targets.
 
 **Update this file in the same commit that changes a bridge's status.**
 
-Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine).
+Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine), Hentai2Read.
 
 ## Targets
 
@@ -17,8 +17,8 @@ Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (gal
 | Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | DDoS-Guard; the creator list is one 12.5 MB JSON (too heavy to fetch per search on a phone). Probing for lighter endpoints was **declined by the permission check** (2026-11-15) | paused (needs your go-ahead) |
 | Coomer | coomer.st | **kemono** | kei `all/coomer` | same engine as Kemono | real people's paywalled explicit content (OnlyFans, Fansly) redistributed without their consent | **dropped** (see below) |
 | Pawchive | pawchive.pw | bespoke ("Kemono alternative") | kei `all/pawchive` | 14 👍 request | check whether its API matches Kemono's; if so it joins the kemono engine | todo |
-| MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | — | todo |
-| Hentai2Read | hentai2read.com | bespoke | aidoku `en.hentai2read` (not in Keiyoushi) | in Aidoku | — | todo |
+| MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | **CF-CLEARANCE**: "Verification Required" challenge on every page, even for curl (2026-11-15) | blocked |
+| Hentai2Read | hentai2read.com | bespoke (Inertia app: page data embedded as JSON) | aidoku `en.hentai2read` (not in Keiyoushi) | in Aidoku | **TLS-FINGERPRINT**: built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
 | Schale Network | niyaniya.moe | bespoke | kei `all/schalenetwork` | in Keiyoushi | JS-SOLVER? (kei uses a WebView — investigate) | todo |
 | IMHentai | imhentai.xxx | **galleryadults** | kei `all/imhentai` | in Keiyoushi | **TLS-FINGERPRINT** (Cloudflare challenges Node/Bun; curl passes): built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
 | HentaiFox | hentaifox.com | **galleryadults** | kei `all/hentaifox` | in Keiyoushi | — | **shipped 0.1.0** (live audit passes) |
@@ -50,6 +50,7 @@ bundle's bytes change only when its code does.
 | Source | Why | What would change that |
 |---|---|---|
 | Coomer | It republishes real people's paywalled explicit photos and videos (OnlyFans, Fansly, CandFans) without their consent. Unlike the drawn-art and doujinshi sites here, building a client for it means helping spread intimate imagery of real, identifiable people against their will. Not built. | Nothing on the technical side; this is a content decision. |
+| MyReadingManga | Cloudflare's "Verification Required" challenge on every page, even for curl. | CF-CLEARANCE (the user passes the check in an in-app web view). |
 | Kemono (paused) | Archives paywalled drawn art (Patreon, Fanbox…), like the other aggregators. Its API sits behind DDoS-Guard, which asks scrapers to send `Accept: text/css`; the creator list comes as one 12.5 MB JSON. A sweep of its API endpoints, looking for a lighter search, was declined by the session's permission check as unauthorized access. | The user's go-ahead to probe the API; then a bridge that searches without pulling the whole list on every query (or caches it). Pawchive waits on the same decision. |
 
 ## Suggested build order
