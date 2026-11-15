@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T09:50:17.718Z",
+  "updated": "2026-11-15T09:57:10.627Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -59,6 +59,33 @@
         "exhentai.org"
       ],
       "signature": "XDNPy0w4817PUrEJV3YeeG2Rx2lA2kF13frtP9rzFJBW3NutCQjRJ6fa3xrdnheEuk8UrjY6GjQctWLr05kgCg"
+    },
+    {
+      "id": "pos5drow.hentai2read",
+      "name": "Hentai2Read",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "en"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentai2read/0.1.0/bridge.js",
+      "sha256": "0b7f28a4d52c77511524b8c05476da8dc38b898d7f0e3800a4d04161d90b1412",
+      "iconUrl": "https://hentai2read.com/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "linkHosts": [
+        "hentai2read.com"
+      ],
+      "signature": "ilQQXrrxNfTTfpODbf4IuksdvN-Ga-qDT6TodRjrR77tzTXwa3VbLusTE2Axszhe9TujkQsk5AVp8tDQyDCcAA"
     },
     {
       "id": "pos5drow.hentaifox",
