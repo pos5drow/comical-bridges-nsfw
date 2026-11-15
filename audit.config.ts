@@ -25,4 +25,5 @@ export const AUDIT: Record<string, BridgeAuditConfig> = {
   imhentai: { searchQuery: "full color", settings: { adult: "true" }, flaky: "Cloudflare challenges the Bun/Node TLS fingerprint" },
   hentai2read: { searchQuery: "villain", settings: { adult: "true" }, flaky: "Cloudflare challenges the Bun/Node TLS fingerprint" },
   wnacg: { searchQuery: "全彩", settings: { adult: "true" } },
+  jmcomic: { searchQuery: "百合", settings: { adult: "true" } },
 };

@@ -7,7 +7,7 @@ this repo's targets.
 
 **Update this file in the same commit that changes a bridge's status.**
 
-Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine), Hentai2Read, wnacg.
+Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine), Hentai2Read, wnacg, JMComic.
 
 ## Targets
 
@@ -23,7 +23,7 @@ Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (gal
 | IMHentai | imhentai.xxx | **galleryadults** | kei `all/imhentai` | in Keiyoushi | **TLS-FINGERPRINT** (Cloudflare challenges Node/Bun; curl passes): built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
 | HentaiFox | hentaifox.com | **galleryadults** | kei `all/hentaifox` | in Keiyoushi | — | **shipped 0.1.0** (live audit passes) |
 | wnacg | wnacg.buzz / .site (mirrors in settings) | bespoke (zh) | kei `zh/wnacg`, aidoku `zh.wnacg` | in both | — (some categories need sign-in; photo/cosplay category left out on purpose) | **shipped 0.1.0** (live audit passes) |
-| JMComic (18comic) | (mirrors rotate) | bespoke (zh) | kei `zh/jinmantiantang`, aidoku `zh.jmcomic` | in both | IMG-TILES (strip shuffle, computable at page-list time) + encrypted API | todo |
+| JMComic (18comic) | 18comic.ink (+ .vip, jmcomic-zzz mirrors in settings) | bespoke (zh), the website | kei `zh/jinmantiantang`, aidoku `zh.jmcomic` | in both | strip shuffle: done with processed page images (`stripLayout`), verified on real pages. Uses the public website, not the mobile app's encrypted API (that would mean posing as the official app with its embedded secret) | **shipped 0.1.0** (live audit passes) |
 
 **Nearly free now the galleryadults engine exists** (Keiyoushi runs 11 sites on it): HentaiRox,
 HentaiZap, HentaiEnvy, AsmHentai, HentaiEra and others. All five answer Node/Bun (checked
@@ -55,6 +55,20 @@ bundle's bytes change only when its code does.
 | Schale Network | Its API token is minted from a solved Turnstile captcha, which Keiyoushi solves automatically. Not done here. | The same user-driven web check: the user solves it, the app passes the token on. |
 | wnacg photo/cosplay category | Real people, not drawn work; left out of the category filter for the same reason as Coomer. The rest of the site is built. | A content decision, not a technical one. |
 | Kemono (paused) | Archives paywalled drawn art (Patreon, Fanbox…), like the other aggregators. Its API sits behind DDoS-Guard, which asks scrapers to send `Accept: text/css`; the creator list comes as one 12.5 MB JSON. A sweep of its API endpoints, looking for a lighter search, was declined by the session's permission check as unauthorized access. | The user's go-ahead to probe the API; then a bridge that searches without pulling the whole list on every query (or caches it). Pawchive waits on the same decision. |
+
+## Notes from building
+
+- **JMComic (2026-11-15):** Keiyoushi uses the mobile app's API, which needs a token made from a
+  secret embedded in the official app and AES-decrypts the responses with a key derived from it.
+  This bridge reads the public website instead: lists, search, album pages and the reader all
+  answer Node/Bun on 18comic.ink (18comic.vip and the jmcomic-zzz mirrors are Cloudflare-challenged
+  from here, so they're offered but not the default). Pages of albums from 220980 on are stored as
+  horizontal strips bottom-up; the strip count is the last hex digit of md5(aid + file name), mod 8
+  or 10 by album age, times two plus two. The layout is the SDK's `stripLayout` reversed. Checked on
+  three real pages without viewing them: after the layout, the rows either side of each seam differ
+  as little as any neighbouring rows (e.g. 3.1 vs 2.3 typical), against 20-30x that before.
+- **Fixtures for every bridge here are cut to one gallery chosen for tame tags** (no minors,
+  school, incest or non-consent tags); related-gallery strips and sidebars are removed.
 
 ## Suggested build order
 
