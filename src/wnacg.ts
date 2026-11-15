@@ -68,7 +68,7 @@ class WnacgBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.wnacg",
     name: "紳士漫畫 (wnacg)",
-    version: "0.1.0",
+    version: "0.1.1",
     contractVersion: "2.1.0",
     languages: ["zh"],
     nsfw: true,
@@ -91,7 +91,7 @@ class WnacgBridge extends BridgeBase {
   }
 
   protected override async request(req: Parameters<BridgeBase["request"]>[0]): Promise<HttpResponse> {
-    return guardResponse(await super.request(req), this.guards);
+    return guardResponse(await super.request(req), this.guards, req);
   }
 
   private async body(path: string): Promise<string> {

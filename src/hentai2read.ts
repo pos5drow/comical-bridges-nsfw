@@ -108,7 +108,7 @@ class Hentai2ReadBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hentai2read",
     name: "Hentai2Read",
-    version: "0.1.0",
+    version: "0.1.1",
     contractVersion: "2.1.0",
     languages: ["en"],
     nsfw: true,
@@ -122,7 +122,7 @@ class Hentai2ReadBridge extends BridgeBase {
   private readonly guards = standardGuards(["hentai2read.com", "hentaicdn.com"]);
 
   protected override async request(req: Parameters<BridgeBase["request"]>[0]): Promise<HttpResponse> {
-    return guardResponse(await super.request(req), this.guards);
+    return guardResponse(await super.request(req), this.guards, req);
   }
 
   /** A page's embedded props. */

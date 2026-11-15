@@ -67,7 +67,7 @@ class JmComicBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.jmcomic",
     name: "禁漫天堂 (JMComic)",
-    version: "0.1.0",
+    version: "0.1.1",
     contractVersion: "2.1.0",
     languages: ["zh"],
     nsfw: true,
@@ -92,7 +92,7 @@ class JmComicBridge extends BridgeBase {
   }
 
   protected override async request(req: Parameters<BridgeBase["request"]>[0]): Promise<HttpResponse> {
-    return guardResponse(await super.request(req), this.guards);
+    return guardResponse(await super.request(req), this.guards, req);
   }
 
   private async page(path: string): Promise<{ $: CheerioRoot; body: string }> {
