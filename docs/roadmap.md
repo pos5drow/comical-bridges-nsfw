@@ -18,7 +18,7 @@ Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (gal
 | Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | creator list is one ~12 MB JSON (no server-side creator search): fetched once, kept 30 min, compacted. Full-size file servers often unreachable: thumbnails by default | **shipped 0.1.0** (live audit passes) |
 | Coomer | coomer.st | **kemono** | kei `all/coomer` | same engine as Kemono | real people's paywalled explicit content (OnlyFans, Fansly) redistributed without their consent | **dropped** (see below) |
 | Pawchive | pawchive.pw | **kemono** (same API) | kei `all/pawchive` | 14 👍 request | its file servers ask scripts for an honest User-Agent and ≤1 req/s, ≤5 downloads, and block browser impersonation: the bridge identifies itself and keeps to that, and gets full-size files | **shipped 0.1.0** (live audit passes) |
-| MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | **CF-CLEARANCE**: "Verification Required" challenge on every page, even for curl (2026-11-15) | blocked |
+| MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | **CF-CLEARANCE**: "Verification Required" challenge on every page, even for curl (2026-11-15) | **built** (its Cloudflare check always wants a person: the web check shows it; live-verified on desktop) |
 | Hentai2Read | hentai2read.com | bespoke (Inertia app: page data embedded as JSON) | aidoku `en.hentai2read` (not in Keiyoushi) | in Aidoku | **TLS-FINGERPRINT**: built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
 | Schale Network | niyaniya.moe | bespoke | kei `all/schalenetwork` | in Keiyoushi | Same engine and token as HDoujin (Keiyoushi mints the token by solving the Turnstile itself; here the person or Cloudflare's own non-interactive check passes it in the web check) | **built** (as HDoujin) |
 | IMHentai | imhentai.xxx | **galleryadults** | kei `all/imhentai` | in Keiyoushi | **TLS-FINGERPRINT** (Cloudflare challenges Node/Bun; curl passes): built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
@@ -58,7 +58,6 @@ bundle's bytes change only when its code does.
 | Source | Why | What would change that |
 |---|---|---|
 | Coomer | It republishes real people's paywalled explicit photos and videos (OnlyFans, Fansly, CandFans) without their consent. Unlike the drawn-art and doujinshi sites here, building a client for it means helping spread intimate imagery of real, identifiable people against their will. Not built. | Nothing on the technical side; this is a content decision. |
-| MyReadingManga | Cloudflare's "Verification Required" challenge on every page, even for curl. | CF-CLEARANCE (the user passes the check in an in-app web view). |
 | wnacg photo/cosplay category | Real people, not drawn work; left out of the category filter for the same reason as Coomer. The rest of the site is built. | A content decision, not a technical one. |
 
 ## Notes from building

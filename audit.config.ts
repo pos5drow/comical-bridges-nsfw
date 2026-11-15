@@ -32,4 +32,5 @@ export const AUDIT: Record<string, BridgeAuditConfig> = {
   // check, which the audit can't do, so the page probes end in a challenge.
   hdoujin: { searchQuery: "maid", settings: { adult: "true" }, flaky: "pages need a clearance token from a web check" },
   schalenetwork: { searchQuery: "maid", settings: { adult: "true" }, flaky: "pages need a clearance token from a web check" },
+  myreadingmanga: { searchQuery: "office", settings: { adult: "true" }, flaky: "Cloudflare check needs a browser" },
 };
