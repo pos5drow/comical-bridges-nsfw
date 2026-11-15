@@ -34,11 +34,20 @@ flaky — these sites IP-gate datacenter (CI runner) addresses even when they wo
 <!-- BRIDGE-STATUS:START -->
 | Bridge | Status | Capabilities | Avg cover | Notes |
 |---|---|---|---|---|
-| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 23 KB (500×534) | Cloudflare / IP-gated from datacenters |
-| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 21 KB (250×341) | sad-panda / IP + cookie gated from datacenters |
-| `hitomi` | ⚠ (13✓ 1⚠ 0✗) | 5/8 | — | images need the host /img-proxy (Referer-gated), unavailable in the audit |
+| `nhentai` | ⚠ (13✓ 3⚠ 0✗ 2⊘) | 7/10 | 37 KB (500×708) | Cloudflare / IP-gated from datacenters |
+| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 20 KB (247×332) | sad-panda / IP + cookie gated from datacenters |
+| `hitomi` | ✓ (13✓ 0⚠ 0✗) | 5/8 | — | images need the host /img-proxy (Referer-gated), unavailable in the audit |
+| `hentaifox` | ✓ (12✓ 0⚠ 0✗ 1⊘) | 4/4 | 53 KB (250×350) | — |
+| `imhentai` | ⚠ (4✓ 4⚠ 0✗) | 4/4 | — | Cloudflare challenges the Bun/Node TLS fingerprint |
+| `hentai2read` | ⚠ (4✓ 5⚠ 0✗) | 4/4 | — | Cloudflare challenges the Bun/Node TLS fingerprint |
+| `wnacg` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 5/5 | 23 KB (300×400) | — |
+| `jmcomic` | ⚠ (4✓ 4⚠ 0✗) | 4/4 | — | — |
+| `kemono` | ⚠ (15✓ 1⚠ 0✗) | 5/5 | 4 KB (160×160) | — |
+| `pawchive` | ⚠ (15✓ 2⚠ 0✗) | 5/5 | 8 KB (229×222) | — |
+| `hdoujin` | ⚠ (13✓ 1⚠ 0✗ 1⊘) | 5/5 | — | pages need a clearance token from a web check |
+| `schalenetwork` | ⚠ (13✓ 1⚠ 0✗ 1⊘) | 5/5 | — | pages need a clearance token from a web check |
 
-_Updated 2026-11-14 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-15 by the nightly live audit ([`audit.ts`](audit.ts))._
 <!-- BRIDGE-STATUS:END -->
 
 ## Develop
