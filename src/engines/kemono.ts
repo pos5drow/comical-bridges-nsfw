@@ -160,7 +160,7 @@ export class KemonoBridge extends BridgeBase {
     this.guards = standardGuards([new URL(cfg.site).hostname]);
   }
   private creators?: { at: number; list: Creator[] };
-  private loading?: Promise<Creator[]>;
+  private loading?: Promise<Creator[]> | undefined;
 
   getSettings(): SettingDescriptor[] {
     return [

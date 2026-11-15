@@ -1278,7 +1278,7 @@ class HitomiBridge extends BridgeBase {
 
   // ── Direct pages ────────────────────────────────────────────────────────────
 
-  async getSeriesPages(seriesId: string): Promise<Page[]> {
+  override async getSeriesPages(seriesId: string): Promise<Page[]> {
     const g = await this.fetchGallery(seriesId);
     return g.files.map((f, index): Page => ({
       index,

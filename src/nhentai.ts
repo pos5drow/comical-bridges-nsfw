@@ -716,7 +716,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
 
   // ── Direct pages ──────────────────────────────────────────────────────────
 
-  async getSeriesPages(seriesId: string): Promise<Page[]> {
+  override async getSeriesPages(seriesId: string): Promise<Page[]> {
     const g = await this.fetchDetail(seriesId);
     const imgSrv = this.imageServer();
     const thumbSrv = this.thumbServer();

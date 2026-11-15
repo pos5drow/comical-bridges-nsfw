@@ -42,7 +42,7 @@ if (!existsSync(bundle)) {
   process.exit(2);
 }
 
-const bridge = loadBridge({
+const bridge = await loadBridge({
   code: readFileSync(bundle, "utf8"),
   capabilities: createBunHost({
     bridgeId: "e-hentai",
@@ -57,12 +57,12 @@ let added: string | undefined; // track for cleanup messaging on failure
 try {
   // 1. Baseline.
   console.log("reading favorites…");
-  const baseline = await bridge.getFavorites!(1);
+  const baseline = await bridge.getFavorites!({});
   const baseIds = ids(baseline);
   console.log(`✓ getFavorites → ${baseline.items.length} existing favorite(s) on page 1`);
 
   // 2. Pick a Popular gallery not already favorited.
-  const popular = await bridge.getListItems!("popular", 1);
+  const popular = await bridge.getListItems!("popular", {});
   const candidate = popular.items.find((s) => !baseIds.has(s.id));
   if (!candidate) {
     console.log("• every Popular gallery is already in your favorites — skipping the mutation test.");
@@ -73,7 +73,7 @@ try {
   // 3. Add → verify present (via getFavorites and isFavorite).
   await bridge.addFavorite!(candidate.id);
   added = candidate.id;
-  const afterAdd = await bridge.getFavorites!(1);
+  const afterAdd = await bridge.getFavorites!({});
   if (!ids(afterAdd).has(candidate.id)) throw new Error("addFavorite did not show up in getFavorites");
   if (!(await bridge.isFavorite!(candidate.id))) throw new Error("isFavorite returned false after addFavorite");
   console.log(`✓ addFavorite → now ${afterAdd.items.length} favorite(s), test gallery present (isFavorite ✓)`);
@@ -81,7 +81,7 @@ try {
   // 4. Remove → verify gone + list restored to baseline.
   await bridge.removeFavorite!(candidate.id);
   added = undefined;
-  const afterRemove = await bridge.getFavorites!(1);
+  const afterRemove = await bridge.getFavorites!({});
   const restoredIds = ids(afterRemove);
   if (restoredIds.has(candidate.id)) throw new Error("removeFavorite left the gallery in the list");
   if (await bridge.isFavorite!(candidate.id)) throw new Error("isFavorite returned true after removeFavorite");

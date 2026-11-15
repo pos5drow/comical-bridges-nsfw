@@ -16,8 +16,9 @@
     "noEmit": true,
     "skipLibCheck": true,
     "types": ["bun"],
-    "baseUrl": ".",
-    "//": "LOCAL LINK: resolve @comical/* to the sibling monorepo source. Replace with published npm versions once @comical/sdk ships.",
+    // Bun's types come from the sibling comical checkout (CI checks the two out side by side).
+    "typeRoots": ["../comical/node_modules/@types"],
+    // LOCAL LINK: resolve @comical/* to the sibling monorepo source. Replace with published npm versions once @comical/sdk ships.
     "paths": {
       "@comical/contract": ["../comical/packages/contract/src/index.ts"],
       "@comical/sdk": ["../comical/packages/sdk/src/index.ts"],
@@ -26,5 +27,5 @@
       "@comical/testkit": ["../comical/packages/testkit/src/index.ts"]
     }
   },
-  "include": ["src", "*.ts"]
+  "include": ["src", "test", "*.ts"]
 }

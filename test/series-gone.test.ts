@@ -13,7 +13,7 @@ import nhentaiFactory from "../src/nhentai.ts";
 
 type Reply = Partial<HttpResponse> & { body: string };
 
-function host(route: (req: HttpRequest) => Reply, settings: Record<string, unknown> = {}): HostCapabilities {
+function host(route: (req: HttpRequest) => Reply, settings: Record<string, string | number | boolean | string[]> = {}): HostCapabilities {
   return {
     network: {
       request: async (req: HttpRequest): Promise<HttpResponse> => ({
@@ -24,7 +24,7 @@ function host(route: (req: HttpRequest) => Reply, settings: Record<string, unkno
         ...route(req),
       }),
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings,
   };
@@ -72,7 +72,7 @@ describe("e-hentai", () => {
   /** Gallery 1 superseded by gallery 2; `newer` is what a lookup of gallery 2 answers. */
   const superseded = (newer: () => Reply) =>
     host((req) => {
-      const [[gid]] = (JSON.parse(String(req.body)) as { gidlist: [number, string][] }).gidlist;
+      const [[gid]] = (JSON.parse(String(req.body)) as { gidlist: [[number, string]] }).gidlist;
       if (gid === 2) return newer();
       return { body: JSON.stringify({ gmetadata: [{ gid: 1, token: "abc", title: "Subject", expunged: true, current_gid: "2", current_key: "def" }] }) };
     });
@@ -94,11 +94,11 @@ describe("e-hentai", () => {
     const info = seriesInfoSchema.parse(await bridge.getSeriesDetails("1:abc"));
     expect(info.title).toBe("Subject");
     expect(info.relatedSeriesGroups).toHaveLength(1);
-    const [group] = info.relatedSeriesGroups!;
+    const group = info.relatedSeriesGroups![0]!;
     expect(group).toMatchObject({ label: "Newer version", kind: "alternative" });
-    expect(group.series).toHaveLength(1);
-    expect(group.series[0]).toMatchObject({ id: "2:def", title: "Subject (Revised)" });
-    expect(group.series[0].thumbnailUrl).toBeTruthy();
+    expect(group.series!).toHaveLength(1);
+    expect(group.series![0]).toMatchObject({ id: "2:def", title: "Subject (Revised)" });
+    expect(group.series![0]!.thumbnailUrl).toBeTruthy();
   });
 
   test("a failed lookup of the newer version still links it, under this gallery's title", async () => {
@@ -141,7 +141,7 @@ describe("e-hentai", () => {
       '<a href="https://exhentai.org/s/aaa111/1-1"></a><a href="https://exhentai.org/s/bbb222/1-2"></a></html>';
 
     /** e-hentai.org hides gallery 1; ExHentai answers `ex` for it. Records every URL asked for. */
-    const hidden = (ex: (url: string) => Reply, settings: Record<string, unknown> = SIGNED_IN) => {
+    const hidden = (ex: (url: string) => Reply, settings: Record<string, string | number | boolean | string[]> = SIGNED_IN) => {
       const urls: string[] = [];
       const caps = host((req) => {
         urls.push(req.url);

@@ -22,7 +22,7 @@ function favHost(reply: (req: HttpRequest) => HttpResponse): { host: HostCapabil
         return reply(req);
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: { apiKey: "test-key" },
   };

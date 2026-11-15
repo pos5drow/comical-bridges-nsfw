@@ -35,7 +35,7 @@ function host(detailCover: Record<string, unknown>): HostCapabilities {
         return { url: req.url, status: 200, statusText: "OK", headers: {}, body };
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -44,7 +44,7 @@ function host(detailCover: Record<string, unknown>): HostCapabilities {
 describe("nhentai cover aspect", () => {
   test("list entries carry the thumbnail's width / height, only when both are present and non-zero", async () => {
     const bridge = factory(host({}));
-    const { items } = await bridge.getListItems("popular-now", { excludedTags: ["100"] });
+    const { items } = await bridge.getListItems!("popular-now", { excludedTags: ["100"] });
     expect(items[0]!.thumbnailAspect).toBe(1.25);
     expect(items[1]!.thumbnailAspect).toBeUndefined();
     expect(items[2]!.thumbnailAspect).toBeUndefined();
@@ -55,7 +55,7 @@ describe("nhentai cover aspect", () => {
 
   test("search results carry it too", async () => {
     const bridge = factory(host({}));
-    const { items } = await bridge.getSearchResults({ text: "anything" });
+    const { items } = await bridge.getSearchResults!({ text: "anything" });
     expect(items[0]!.thumbnailAspect).toBe(1.25);
   });
 

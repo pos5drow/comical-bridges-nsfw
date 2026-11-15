@@ -43,7 +43,7 @@ function listHost(requested: string[]): HostCapabilities {
         return res(404, "");
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -64,7 +64,7 @@ afterEach(() => {
 
 describe("hitomi list catalog", () => {
   test("top-level pages, in order", async () => {
-    const lists = await bridge().bridge.getLists();
+    const lists = await bridge().bridge.getLists!();
     for (const l of lists) expect(seriesListSchema.safeParse(l).success).toBe(true);
     expect(lists.filter((l) => l.page).map((l) => l.name)).toEqual([
       "Date Added",
@@ -78,7 +78,7 @@ describe("hitomi list catalog", () => {
   });
 
   test("Home is the popular rails over a Date Added grid, which comes last", async () => {
-    const home = (await bridge().bridge.getLists()).filter((l) => !l.page);
+    const home = (await bridge().bridge.getLists!()).filter((l) => !l.page);
     expect(home.map((l) => [l.name, l.layout])).toEqual([
       ["Popular Today", "hero"],
       ["Popular This Week", "carousel"],
@@ -89,13 +89,13 @@ describe("hitomi list catalog", () => {
   });
 
   test("exactly one featured list, and it is a Home rail — the bridge still opens on Home", async () => {
-    const featured = (await bridge().bridge.getLists()).filter((l) => l.featured);
+    const featured = (await bridge().bridge.getLists!()).filter((l) => l.featured);
     expect(featured).toHaveLength(1);
     expect(featured[0]!.page).toBeFalsy();
   });
 
   test("internal list fields don't leak into the catalog", async () => {
-    for (const l of await bridge().bridge.getLists()) {
+    for (const l of await bridge().bridge.getLists!()) {
       expect(l).not.toHaveProperty("sort");
       expect(l).not.toHaveProperty("perPage");
     }
@@ -114,7 +114,7 @@ describe("hitomi list items", () => {
   for (const [id, path] of cases) {
     test(`${id} reads ${path}, newest/most popular first`, async () => {
       const { bridge: b, requested } = bridge();
-      const res = await b.getListItems(id);
+      const res = await b.getListItems!(id);
       expect(nozomiReads(requested)).toEqual([path]);
       expect(res.items).toHaveLength(24);
       expect(res.items[0]!.id).toBe(String(TOTAL_IDS));
@@ -124,20 +124,20 @@ describe("hitomi list items", () => {
 
   test("a Home rail reads the same ordering as its page, a preview's worth at a time", async () => {
     const { bridge: b, requested } = bridge();
-    const rail = await b.getListItems("home-popular-week");
+    const rail = await b.getListItems!("home-popular-week");
     expect(nozomiReads(requested)).toEqual(["/popular/week-all.nozomi"]);
     expect(rail.items).toHaveLength(12);
 
-    const next = await b.getListItems("home-popular-week", { cursor: rail.nextCursor });
+    const next = await b.getListItems!("home-popular-week", { cursor: rail.nextCursor });
     expect(next.items[0]!.id).toBe(String(TOTAL_IDS - 12));
   });
 
   test("the Home grid pages a full page at a time", async () => {
-    expect((await bridge().bridge.getListItems("home-latest")).items).toHaveLength(24);
+    expect((await bridge().bridge.getListItems!("home-latest")).items).toHaveLength(24);
   });
 
   test("an unknown list id throws", async () => {
-    await expect(bridge().bridge.getListItems("nope")).rejects.toThrow(/unknown list/);
+    await expect(bridge().bridge.getListItems!("nope")).rejects.toThrow(/unknown list/);
   });
 });
 
@@ -145,27 +145,27 @@ describe("hitomi Random", () => {
   test("a fresh walk reshuffles", async () => {
     const b = bridge().bridge;
     Math.random = () => 0.1;
-    const first = (await b.getListItems("random")).items.map((e) => e.id);
+    const first = (await b.getListItems!("random")).items.map((e) => e.id);
     Math.random = () => 0.7;
-    const second = (await b.getListItems("random")).items.map((e) => e.id);
+    const second = (await b.getListItems!("random")).items.map((e) => e.id);
     expect(first).toHaveLength(24);
     expect(second).not.toEqual(first);
   });
 
   test("paging continues one walk: the same cursor gives the same page", async () => {
     const b = bridge().bridge;
-    const page1 = await b.getListItems("random");
+    const page1 = await b.getListItems!("random");
     expect(page1.nextCursor).toBeDefined();
     Math.random = () => 0.42; // a fresh seed must not be drawn for a cursor that carries one
-    const a = (await b.getListItems("random", { cursor: page1.nextCursor })).items.map((e) => e.id);
-    const c = (await b.getListItems("random", { cursor: page1.nextCursor })).items.map((e) => e.id);
+    const a = (await b.getListItems!("random", { cursor: page1.nextCursor })).items.map((e) => e.id);
+    const c = (await b.getListItems!("random", { cursor: page1.nextCursor })).items.map((e) => e.id);
     expect(a).toHaveLength(24);
     expect(c).toEqual(a);
   });
 
   test("an unseeded cursor (from before the seed existed) still pages", async () => {
     const { encodeCursor } = await import("@comical/sdk");
-    const res = await bridge().bridge.getListItems("random", { cursor: encodeCursor({ page: 2 }) });
+    const res = await bridge().bridge.getListItems!("random", { cursor: encodeCursor({ page: 2 }) });
     expect(res.items).toHaveLength(24);
   });
 });

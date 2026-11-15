@@ -27,7 +27,7 @@ function nhentaiHost(): HostCapabilities {
         return { url: req.url, status: 200, statusText: "OK", headers: {}, body };
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -36,7 +36,7 @@ function nhentaiHost(): HostCapabilities {
 describe("nhentai card language badge", () => {
   test("tags each card with its language only, from inline tag_ids", async () => {
     const bridge = nhentaiFactory(nhentaiHost());
-    const { items } = await bridge.getListItems("popular-now");
+    const { items } = await bridge.getListItems!("popular-now");
     expect(items[0]!.badges).toEqual([{ text: "EN", position: "bottom-right", tone: "info" }]);
     expect(items[1]!.badges).toEqual([{ text: "JP", position: "bottom-right", tone: "info" }]);
     // No language tag → no badge at all.

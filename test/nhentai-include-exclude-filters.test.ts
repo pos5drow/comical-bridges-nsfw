@@ -30,7 +30,7 @@ function searchHost(): { host: HostCapabilities; searchUrls: string[] } {
         return ok("{}");
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -46,7 +46,7 @@ describe("nhentai language filter include/exclude", () => {
   test("include produces language: parts", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "language", value: { include: ["english", "chinese"], exclude: [] } }],
     });
@@ -59,7 +59,7 @@ describe("nhentai language filter include/exclude", () => {
   test("exclude produces -language: parts", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "language", value: { include: [], exclude: ["japanese"] } }],
     });
@@ -71,7 +71,7 @@ describe("nhentai language filter include/exclude", () => {
   test("mixed include and exclude combine in one query", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "language", value: { include: ["english"], exclude: ["japanese"] } }],
     });
@@ -83,7 +83,7 @@ describe("nhentai language filter include/exclude", () => {
   test("legacy string[] value is treated as all-include", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "language", value: ["english"] }],
     });
@@ -97,7 +97,7 @@ describe("nhentai category filter include/exclude", () => {
   test("include produces category: parts", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "category", value: { include: ["manga"], exclude: [] } }],
     });
@@ -109,7 +109,7 @@ describe("nhentai category filter include/exclude", () => {
   test("exclude produces -category: parts", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "category", value: { include: [], exclude: ["doujinshi"] } }],
     });
@@ -121,7 +121,7 @@ describe("nhentai category filter include/exclude", () => {
   test("mixed include and exclude combine", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "category", value: { include: ["manga"], exclude: ["doujinshi"] } }],
     });
@@ -135,8 +135,8 @@ describe("nhentai tag filter include/exclude", () => {
   test("include produces tag:\"name\" parts (after getTags seeds cache)", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getTags("big"); // seeds tagNames: 1 → "big breasts"
-    await bridge.getSearchResults({
+    await bridge.getTags!("big"); // seeds tagNames: 1 → "big breasts"
+    await bridge.getSearchResults!({
       text: "",
       filters: [{ key: "tag", value: { include: ["1"], exclude: [] } }],
     });
@@ -149,8 +149,8 @@ describe("nhentai tag filter include/exclude", () => {
   test("exclude produces -tag:\"name\" parts", async () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
-    await bridge.getTags(""); // seeds tagNames: 1 → "big breasts", 2 → "sole female"
-    await bridge.getSearchResults({
+    await bridge.getTags!(""); // seeds tagNames: 1 → "big breasts", 2 → "sole female"
+    await bridge.getSearchResults!({
       text: "",
       filters: [{ key: "tag", value: { include: [], exclude: ["2"] } }],
     });
@@ -163,7 +163,7 @@ describe("nhentai tag filter include/exclude", () => {
     const { host, searchUrls } = searchHost();
     const bridge = factory(host);
     // No getTags call — cache is empty
-    await bridge.getSearchResults({
+    await bridge.getSearchResults!({
       text: "test",
       filters: [{ key: "tag", value: { include: ["999"], exclude: ["888"] } }],
     });

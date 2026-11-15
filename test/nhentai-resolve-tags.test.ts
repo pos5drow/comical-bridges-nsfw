@@ -8,8 +8,8 @@ import type { HostCapabilities, HttpRequest, HttpResponse } from "@comical/contr
 import factory from "../src/nhentai.ts";
 
 /** A host that answers GET /tags/ids?ids=… with canned tags, recording the request URLs it received. */
-function tagIdsHost(): { host: HostCapabilities; calls: Array<{ url: string; method?: string }> } {
-  const calls: Array<{ url: string; method?: string }> = [];
+function tagIdsHost(): { host: HostCapabilities; calls: Array<{ url: string; method?: string | undefined }> } {
+  const calls: Array<{ url: string; method?: string | undefined }> = [];
   const host: HostCapabilities = {
     network: {
       request: async (req: HttpRequest): Promise<HttpResponse> => {
@@ -25,7 +25,7 @@ function tagIdsHost(): { host: HostCapabilities; calls: Array<{ url: string; met
         return ok("[]");
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -47,8 +47,8 @@ describe("nhentai resolve-tags", () => {
     ]);
     // A single GET carrying the ids comma-separated in the query.
     expect(calls).toHaveLength(1);
-    expect(calls[0].method ?? "GET").toBe("GET");
-    expect(new URL(calls[0].url).searchParams.get("ids")).toBe("19440,32341");
+    expect(calls[0]!.method ?? "GET").toBe("GET");
+    expect(new URL(calls[0]!.url).searchParams.get("ids")).toBe("19440,32341");
   });
 
   test("skips non-numeric ids and short-circuits when none remain", async () => {
@@ -61,7 +61,7 @@ describe("nhentai resolve-tags", () => {
   test("a failing endpoint yields no labels rather than throwing", async () => {
     const host: HostCapabilities = {
       network: { request: async (req) => ({ url: req.url, status: 500, statusText: "err", headers: {}, body: "nope" }) },
-      storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+      storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
       log: { debug() {}, info() {}, warn() {}, error() {} },
       settings: {},
     };

@@ -1144,7 +1144,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
    * whether MPV is on, so `/mpv/` is only asked when it can answer — it used to be tried first on
    * every open, a request (and a pacing gap) wasted for every account without it.
    */
-  async getSeriesPages(seriesId: string): Promise<Page[]> {
+  override async getSeriesPages(seriesId: string): Promise<Page[]> {
     const [gid, token] = parseId(seriesId);
 
     const firstHtml = await this.galleryPage(gid, token);
@@ -1156,7 +1156,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
         // dotAll flag handles imagelist JSON that may span multiple lines
         const match = mpvHtml.match(/var imagelist\s*=\s*(\[[\s\S]+?\]);/);
         if (match) {
-          const imagelist = JSON.parse(match[1]) as Array<{ k: string; t?: string }>;
+          const imagelist = JSON.parse(match[1]!) as Array<{ k: string; t?: string }>;
           if (imagelist.length > 0) {
             console.log(`[e-hentai] getSeriesPages ${seriesId}: MPV OK, ${imagelist.length} pages`);
             return imagelist.map((entry, i) => {

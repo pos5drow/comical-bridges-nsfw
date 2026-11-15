@@ -77,7 +77,7 @@ describe("browse and search", () => {
         { key: "language", value: "english" },
         { key: "tags", value: "milf, -ntr, -gore" },
       ],
-      sort: { key: "8" },
+      sort: { key: "8", ascending: false },
     });
     const q = new URL(requests[0]!.url).searchParams;
     expect(q.get("s")).toBe('title:"missus x" language:"^english$" tag:"milf" tag:"-ntr,-gore"');

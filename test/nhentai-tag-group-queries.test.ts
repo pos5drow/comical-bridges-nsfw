@@ -27,7 +27,7 @@ function detailHost(tags: Tag[], urls: string[] = []): HostCapabilities {
         return { url: req.url, status: 200, statusText: "OK", headers: {}, body };
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -86,7 +86,7 @@ describe("nhentai tag groups are all actionable", () => {
     const bridge = factory(detailHost(ALL_TYPES, urls));
     const info = await bridge.getSeriesDetails("1");
     const query = info.tagGroups!.find((g) => g.label === "Characters")!.tagQueries![0]!;
-    await bridge.getSearchResults({ text: query });
+    await bridge.getSearchResults!({ text: query });
     const search = urls.map((u) => new URL(u)).find((u) => u.pathname.endsWith("/search"))!;
     expect(search.searchParams.get("query")).toBe('character:"hinata hyuga"');
   });

@@ -38,7 +38,7 @@ function host(): HostCapabilities {
         return ok(req.url.includes("api.e-hentai.org") ? JSON.stringify(GDATA) : LISTING);
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };

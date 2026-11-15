@@ -49,7 +49,7 @@ function detailHost(related: RelatedGallery[]): HostCapabilities {
         return { url: req.url, status: 200, statusText: "OK", headers: {}, body };
       },
     },
-    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
+    storage: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [], secure: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] } },
     log: { debug() {}, info() {}, warn() {}, error() {} },
     settings: {},
   };
@@ -58,7 +58,7 @@ function detailHost(related: RelatedGallery[]): HostCapabilities {
 describe("nhentai related-series rail", () => {
   test('maps /related galleries into one "More Like This" (kind: similar) group', async () => {
     const bridge = factory(detailHost([R1, R2]));
-    const groups = await bridge.getRelatedSeries("1");
+    const groups = await bridge.getRelatedSeries!("1");
 
     expect(groups).toHaveLength(1);
     expect(groups[0]!.label).toBe("More Like This");
@@ -71,6 +71,6 @@ describe("nhentai related-series rail", () => {
 
   test("returns no groups when the gallery has no related items", async () => {
     const bridge = factory(detailHost([]));
-    expect(await bridge.getRelatedSeries("1")).toEqual([]);
+    expect(await bridge.getRelatedSeries!("1")).toEqual([]);
   });
 });
