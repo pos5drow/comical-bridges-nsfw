@@ -52,8 +52,8 @@ bundle's bytes change only when its code does.
 |---|---|---|
 | Coomer | It republishes real people's paywalled explicit photos and videos (OnlyFans, Fansly, CandFans) without their consent. Unlike the drawn-art and doujinshi sites here, building a client for it means helping spread intimate imagery of real, identifiable people against their will. Not built. | Nothing on the technical side; this is a content decision. |
 | MyReadingManga | Cloudflare's "Verification Required" challenge on every page, even for curl. | CF-CLEARANCE (the user passes the check in an in-app web view). |
-| HDoujin | Its API needs a `crt` token the site writes to the browser's localStorage after its own check; without a browser there is no token. | A user-driven web check in the app that can hand a localStorage value back to the bridge (a variant of CF-CLEARANCE). |
-| Schale Network | Its API token is minted from a solved Turnstile captcha, which Keiyoushi solves automatically. Not done here. | The same user-driven web check: the user solves it, the app passes the token on. |
+| HDoujin | Its API needs a `crt` token the site writes to the browser's localStorage after its own check; without a browser there is no token. | A user-driven web check that hands a localStorage value back to the bridge: built (comical 29f584c; the bridge names `storage: ["clearance"]` on its challenge and reads `webCheckStorageKey`). Still needs the bridge, studied through a cleared session. |
+| Schale Network | Its API token is minted from a solved Turnstile captcha, which Keiyoushi solves automatically. Not done here. | The same user-driven web check, now built: the user solves it and the app passes the token on. Still needs the bridge. |
 | wnacg photo/cosplay category | Real people, not drawn work; left out of the category filter for the same reason as Coomer. The rest of the site is built. | A content decision, not a technical one. |
 
 ## Notes from building
