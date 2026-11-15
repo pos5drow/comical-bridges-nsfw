@@ -8,7 +8,7 @@ import { galleryAdults } from "./engines/galleryadults";
 export default galleryAdults({
   id: "hentaifox",
   name: "HentaiFox",
-  version: "0.1.1",
+  version: "0.1.2",
   site: "https://hentaifox.com",
   languages: {
     en: ["English", "english"],

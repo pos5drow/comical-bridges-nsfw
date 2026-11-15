@@ -8,7 +8,7 @@ import { kemonoSite } from "./engines/kemono";
 export default kemonoSite({
   id: "kemono",
   name: "Kemono",
-  version: "0.1.1",
+  version: "0.1.2",
   site: "https://kemono.cr",
   thumbnails: "https://img.kemono.cr",
   icons: "https://img.kemono.cr",

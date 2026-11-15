@@ -67,7 +67,7 @@ class JmComicBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.jmcomic",
     name: "禁漫天堂 (JMComic)",
-    version: "0.1.1",
+    version: "0.1.2",
     contractVersion: "2.1.0",
     languages: ["zh"],
     nsfw: true,

@@ -11,7 +11,7 @@ import { kemonoSite } from "./engines/kemono";
 export default kemonoSite({
   id: "pawchive",
   name: "Pawchive",
-  version: "0.1.1",
+  version: "0.1.2",
   site: "https://pawchive.pw",
   thumbnails: "https://img.pawchive.pw",
   icons: "https://pawchive.pw",
