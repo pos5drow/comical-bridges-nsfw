@@ -76,7 +76,7 @@ function imgSrc($el: { attr(name: string): string | undefined }): string | undef
 
 export class GalleryAdultsBridge extends BridgeBase {
   readonly info: BridgeInfo;
-  private readonly guards;
+  private readonly guards: ReturnType<typeof standardGuards>;
   private readonly siteHost: string;
 
   constructor(

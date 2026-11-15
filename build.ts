@@ -26,6 +26,8 @@ const bridges: Array<{ id: string; src: string }> = [
   { id: "hentai2read", src: "hentai2read.ts" },
   { id: "wnacg", src: "wnacg.ts" },
   { id: "jmcomic", src: "jmcomic.ts" },
+  { id: "kemono", src: "kemono.ts" },
+  { id: "pawchive", src: "pawchive.ts" },
 ];
 
 for (const { id, src } of bridges) {

@@ -7,16 +7,16 @@ this repo's targets.
 
 **Update this file in the same commit that changes a bridge's status.**
 
-Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine), Hentai2Read, wnacg, JMComic.
+Already shipped: E-Hentai, Hitomi, nhentai. Added here: HentaiFox, IMHentai (galleryadults engine), Hentai2Read, wnacg, JMComic, Kemono and Pawchive (kemono engine).
 
 ## Targets
 
 | Source | Site | Engine | Upstream refs | Signals | Blockers | Status |
 |---|---|---|---|---|---|---|
 | HDoujin | hdoujin.org | bespoke | kei `all/hdoujin` | 17 👍 request | API needs a `crt` clearance token the site puts in the browser's localStorage after its own check; Keiyoushi asks the user to open a WebView and reads it there | blocked (needs a user-driven web check) |
-| Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | DDoS-Guard; the creator list is one 12.5 MB JSON (too heavy to fetch per search on a phone). Probing for lighter endpoints was **declined by the permission check** (2026-11-15) | paused (needs your go-ahead) |
+| Kemono | kemono.cr | **kemono** | kei `all/kemono` | EverythingMoe; kei ships both | creator list is one ~12 MB JSON (no server-side creator search): fetched once, kept 30 min, compacted. Full-size file servers often unreachable: thumbnails by default | **shipped 0.1.0** (live audit passes) |
 | Coomer | coomer.st | **kemono** | kei `all/coomer` | same engine as Kemono | real people's paywalled explicit content (OnlyFans, Fansly) redistributed without their consent | **dropped** (see below) |
-| Pawchive | pawchive.pw | bespoke ("Kemono alternative") | kei `all/pawchive` | 14 👍 request | check whether its API matches Kemono's; if so it joins the kemono engine | todo |
+| Pawchive | pawchive.pw | **kemono** (same API) | kei `all/pawchive` | 14 👍 request | its file servers ask scripts for an honest User-Agent and ≤1 req/s, ≤5 downloads, and block browser impersonation: the bridge identifies itself and keeps to that, and gets full-size files | **shipped 0.1.0** (live audit passes) |
 | MyReadingManga | myreadingmanga.info | bespoke (WordPress) | kei `all/myreadingmanga`, aidoku `multi.myreadingmanga` | #48 in the comics category | **CF-CLEARANCE**: "Verification Required" challenge on every page, even for curl (2026-11-15) | blocked |
 | Hentai2Read | hentai2read.com | bespoke (Inertia app: page data embedded as JSON) | aidoku `en.hentai2read` (not in Keiyoushi) | in Aidoku | **TLS-FINGERPRINT**: built from pages fetched by hand, audit flaky | **shipped 0.1.0** |
 | Schale Network | niyaniya.moe | bespoke | kei `all/schalenetwork` | in Keiyoushi | API needs a `crt` token minted from a solved Turnstile captcha; Keiyoushi solves it automatically | blocked (captcha; not solved automatically) |
@@ -54,7 +54,6 @@ bundle's bytes change only when its code does.
 | HDoujin | Its API needs a `crt` token the site writes to the browser's localStorage after its own check; without a browser there is no token. | A user-driven web check in the app that can hand a localStorage value back to the bridge (a variant of CF-CLEARANCE). |
 | Schale Network | Its API token is minted from a solved Turnstile captcha, which Keiyoushi solves automatically. Not done here. | The same user-driven web check: the user solves it, the app passes the token on. |
 | wnacg photo/cosplay category | Real people, not drawn work; left out of the category filter for the same reason as Coomer. The rest of the site is built. | A content decision, not a technical one. |
-| Kemono (paused) | Archives paywalled drawn art (Patreon, Fanbox…), like the other aggregators. Its API sits behind DDoS-Guard, which asks scrapers to send `Accept: text/css`; the creator list comes as one 12.5 MB JSON. A sweep of its API endpoints, looking for a lighter search, was declined by the session's permission check as unauthorized access. | The user's go-ahead to probe the API; then a bridge that searches without pulling the whole list on every query (or caches it). Pawchive waits on the same decision. |
 
 ## Notes from building
 
@@ -67,13 +66,22 @@ bundle's bytes change only when its code does.
   or 10 by album age, times two plus two. The layout is the SDK's `stripLayout` reversed. Checked on
   three real pages without viewing them: after the layout, the rows either side of each seam differ
   as little as any neighbouring rows (e.g. 3.1 vs 2.3 typical), against 20-30x that before.
+- **Kemono and Pawchive (2026-11-15):** probed with the user's go-ahead. One API, so one engine
+  (`engines/kemono.ts`). Neither has a creator search, and the sites' own artist pages download the
+  whole creator list, so the bridge does too, once per 30 minutes, kept compacted (~100k creators;
+  ~40 MB of heap while parsing in Bun). Kemono's full-size servers (`n1`–`n4`) timed out from here,
+  so pages default to its 800 px thumbnails. Pawchive's file servers refuse browser User-Agents
+  and say why: they want scripts to identify themselves and stay under 1 req/s and 5 downloads. With
+  an honest User-Agent they serve full-size files, so that's what the bridge does (its User-Agent
+  has no contact address; one could be added). Keiyoushi's Pawchive sends a browser User-Agent.
+
 - **Fixtures for every bridge here are cut to one gallery chosen for tame tags** (no minors,
   school, incest or non-consent tags); related-gallery strips and sidebars are removed.
 
 ## Suggested build order
 
 1. galleryadults engine → IMHentai, HentaiFox.
-2. kemono engine → Kemono, Coomer, then check Pawchive.
+2. kemono engine → Kemono, Pawchive (done; Coomer dropped).
 3. MyReadingManga, Hentai2Read.
 4. After the JS-SOLVER investigations: HDoujin, Schale Network, wnacg.
 5. After IMG-TILES lands: JMComic.
