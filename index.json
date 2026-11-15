@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T22:14:50.162Z",
+  "updated": "2026-11-15T22:45:40.146Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -63,7 +63,7 @@
     {
       "id": "pos5drow.hdoujin",
       "name": "HDoujin",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -76,8 +76,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hdoujin/0.1.0/bridge.js",
-      "sha256": "23248910f9bc7bb4107c7e28925d6bda8d96cf6418891be3ba1366276975b69e",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hdoujin/0.1.1/bridge.js",
+      "sha256": "8a677a0ff065e68b63541bd777b068857dd9ec9933ee1c4a491cffd62efcf92e",
       "iconUrl": "https://hdoujin.org/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -95,7 +95,7 @@
       "linkHosts": [
         "hdoujin.org"
       ],
-      "signature": "Kr6Nc-eYLpqXrBTwvfIQWnF-xx7AsAHz1ZvGbUojhGa5UAU-bTdS5rmy3mdcTmY0v_cHHd7NlxGeA-m6z9SXAw"
+      "signature": "XLZu734MEJ9E7qKntKpO7P_9oHckJHPlcezoasl_qm6iZyYON9lkFxAby9kKmuqyBOen8MWS4mPdFMIO6N2ZBA"
     },
     {
       "id": "pos5drow.hentai2read",
@@ -398,7 +398,7 @@
     {
       "id": "pos5drow.schalenetwork",
       "name": "Schale Network",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -411,8 +411,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.schalenetwork/0.1.0/bridge.js",
-      "sha256": "1ef525226ad43d943fd5569942ae8ed777a060894c56c04bc2f344795cf73990",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.schalenetwork/0.1.1/bridge.js",
+      "sha256": "536df8677568efdfd95d92c8e0ebbebc1417b045d540da9a77da917c9f1876f6",
       "iconUrl": "https://niyaniya.moe/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -430,7 +430,7 @@
       "linkHosts": [
         "niyaniya.moe"
       ],
-      "signature": "PkznUZD5gDqIIk4SMWUWBlymSQvfcgC3iVNUShC3lLfnrlMH4rXaOOYQ29lWdKn6BKR1j9yOn1f-AlhTC0k5DA"
+      "signature": "lfOmXoA5Wn9SRDxKXuBMPu9SHmUj1uR1At6-4UQUHO1ghIyjDQBzQVeef2KwA-V4aiZLqIumHLHimg8cQYpdAA"
     },
     {
       "id": "pos5drow.wnacg",
