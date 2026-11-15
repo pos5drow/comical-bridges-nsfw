@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T12:12:19.251Z",
+  "updated": "2026-11-15T12:51:34.121Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -61,9 +61,46 @@
       "signature": "XDNPy0w4817PUrEJV3YeeG2Rx2lA2kF13frtP9rzFJBW3NutCQjRJ6fa3xrdnheEuk8UrjY6GjQctWLr05kgCg"
     },
     {
+      "id": "pos5drow.hdoujin",
+      "name": "HDoujin",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "multi"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hdoujin/0.1.0/bridge.js",
+      "sha256": "23248910f9bc7bb4107c7e28925d6bda8d96cf6418891be3ba1366276975b69e",
+      "iconUrl": "https://hdoujin.org/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "images": {
+        "hosts": [
+          "erocdn.net"
+        ],
+        "headers": {
+          "Origin": "https://hdoujin.org",
+          "Referer": "https://hdoujin.org/"
+        }
+      },
+      "linkHosts": [
+        "hdoujin.org"
+      ],
+      "signature": "Kr6Nc-eYLpqXrBTwvfIQWnF-xx7AsAHz1ZvGbUojhGa5UAU-bTdS5rmy3mdcTmY0v_cHHd7NlxGeA-m6z9SXAw"
+    },
+    {
       "id": "pos5drow.hentai2read",
       "name": "Hentai2Read",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "en"
@@ -75,8 +112,8 @@
         "filters",
         "sort"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentai2read/0.1.1/bridge.js",
-      "sha256": "219b91d1a6b3853437c7effc39fd69dc024dab1183b7346d0aece2b6ae7d848b",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentai2read/0.1.2/bridge.js",
+      "sha256": "c49ea9983260bac5c2727b6dfa7f14f54122987aa8cae24a93175c0f2c528a13",
       "iconUrl": "https://hentai2read.com/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -85,12 +122,12 @@
       "linkHosts": [
         "hentai2read.com"
       ],
-      "signature": "xGHvPaZVVaEyojdT1d1rfuNYXtLSUendVUbHez79KKOYy74Qc6IaWgs0fY3m2JHZKSrA8k1td9D2vv0vYPZsAg"
+      "signature": "Wdx3IPdw7SWt1p8CAkLg82xrTfX3SSrxcio3JB9oj29jsV3EqJiJ0GpLKwCz2pkzoBIjsXeqazVqdlZq3Ik8Ag"
     },
     {
       "id": "pos5drow.hentaifox",
       "name": "HentaiFox",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -102,8 +139,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentaifox/0.1.1/bridge.js",
-      "sha256": "bc185f1dadf33c9330ee1dc80c37740b13c37bfc68d0a0b2213bee6ae145ff79",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentaifox/0.1.2/bridge.js",
+      "sha256": "ba8cbe6852573585519096741bdd62b1224569aada57c8c99af58a2941250c4e",
       "iconUrl": "https://hentaifox.com/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -112,7 +149,7 @@
       "linkHosts": [
         "hentaifox.com"
       ],
-      "signature": "8ueygA0FM4OfUhDFJlq7-Favs4gxKuS_f6QTQ3Ed2Saq6yU--oyZ9tVmdE7fJ3ImQMItf2yT9ZNeOx670V8QBw"
+      "signature": "UiIa-hBWcdcRgJxStsVN5KdfATJJhwALPN2ErcPzuEJMo0t8A4CN5eTwPSMQ0ShCIzcM_fcayKlXnhdcS-j9CA"
     },
     {
       "id": "pos5drow.hitomi",
@@ -173,7 +210,7 @@
     {
       "id": "pos5drow.imhentai",
       "name": "IMHentai",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -185,8 +222,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.imhentai/0.1.1/bridge.js",
-      "sha256": "806f8a19e73dadeb1ef5d96f6e651cab572295c2ca20c39c59466f4948678917",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.imhentai/0.1.2/bridge.js",
+      "sha256": "2a16394ef5503180a27d12590f174ff119d998e3db2296c79d160fd6e90e97ad",
       "iconUrl": "https://imhentai.xxx/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -195,12 +232,12 @@
       "linkHosts": [
         "imhentai.xxx"
       ],
-      "signature": "FBZrhGjK0Ee5v_n-msnBMP1r1Xrq7STbG9MeP-TTt7pLPXo8X6BRBpmcit3FgRiynfAclOFuHVxYh9keyiXxBw"
+      "signature": "SVG7BnZ7AX5PQBVEq17SOYBNR8GUYC9aGm7Fm95QvLUTqTj82ZVi40Djm2uPA4xR0mtDw7dLJyI1WE5Kqxi8Ag"
     },
     {
       "id": "pos5drow.jmcomic",
       "name": "禁漫天堂 (JMComic)",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "zh"
@@ -212,8 +249,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.jmcomic/0.1.1/bridge.js",
-      "sha256": "75ac91ef8b7bac619788999d4c3586cb3ee7df4a4ad083f6cb8b0fd54e3e6df7",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.jmcomic/0.1.2/bridge.js",
+      "sha256": "954324f9f719bd864aa64a3d3bef84914db0e7c82587fb092e966f68618f2be4",
       "iconUrl": "https://18comic.ink/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -236,12 +273,12 @@
         "jmcomic-zzz.one",
         "jmcomic-zzz.org"
       ],
-      "signature": "Yi3wzGcrLI2yn-s7vskygdxeYBZTCvU0hSt_TP64lwIB3o02MKzdYV20Mf2-Nvx-bFWDHNNBZq0I3YwYCkxiDQ"
+      "signature": "baE-zr3b-Q7qdmATwNKYypRgEXqrzquT-Oruw9dZkcWKKuISOxCCSwSa9S413AY4fLwmIEOhUNwaX5yhg3wmBA"
     },
     {
       "id": "pos5drow.kemono",
       "name": "Kemono",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -254,8 +291,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.kemono/0.1.1/bridge.js",
-      "sha256": "9a9f312bc5d3a05fa62d8f77ba3f52cdb6ea3d7abaca99a1fe93f7494922f269",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.kemono/0.1.2/bridge.js",
+      "sha256": "0aea127fdd2957946a15496a31b38e9b076d317c74af1eff435c70eff4d8dfcc",
       "iconUrl": "https://kemono.cr/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -265,7 +302,7 @@
         "kemono.cr",
         "kemono.su"
       ],
-      "signature": "Ks2tRjlByFcAcVF6dteUQ8-JVisYIHuwniz05dGhujUC53DaTeVi8ZLewzg9N1znlBLcsY62mKD18KR5OQzyAw"
+      "signature": "ynxkT0oWzbFm-GRQvv3j6o1UFficiUXFkPj_DCmFKTUnGC4GW3ZtTdzduOm2N9oKoeQGil48UoGi77FlWXGrDQ"
     },
     {
       "id": "pos5drow.nhentai",
@@ -303,7 +340,7 @@
     {
       "id": "pos5drow.pawchive",
       "name": "Pawchive",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -316,8 +353,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.pawchive/0.1.1/bridge.js",
-      "sha256": "79016fdf6a6e6cb7c8f9ae26248224b020d4764ff749ad9b364cca7eccf42b85",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.pawchive/0.1.2/bridge.js",
+      "sha256": "d2c54974ff7ddb7dfce211379745eb45e9530f44e0f866c3e69194f6a87d1c48",
       "iconUrl": "https://pawchive.pw/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -327,12 +364,49 @@
         "pawchive.pw",
         "pawchive.st"
       ],
-      "signature": "xI8GXz013EjelQOI9NitgSFbhI5ppHMrbdg0_9LBhWurex27dLkK6Dd-jiJc_JllAvFIaQHrc2UbcnJYzPAoDg"
+      "signature": "1K-C4UffbyxyzzRa11OEpOkw4YX3ZbGoRTpNZBh8__n9gBXAzrzdWWxhJjkJODMwox18XcBuRcmW8T1_xr_xBg"
+    },
+    {
+      "id": "pos5drow.schalenetwork",
+      "name": "Schale Network",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "multi"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.schalenetwork/0.1.0/bridge.js",
+      "sha256": "1ef525226ad43d943fd5569942ae8ed777a060894c56c04bc2f344795cf73990",
+      "iconUrl": "https://niyaniya.moe/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "images": {
+        "hosts": [
+          "erocdn.net"
+        ],
+        "headers": {
+          "Origin": "https://niyaniya.moe",
+          "Referer": "https://niyaniya.moe/"
+        }
+      },
+      "linkHosts": [
+        "niyaniya.moe"
+      ],
+      "signature": "PkznUZD5gDqIIk4SMWUWBlymSQvfcgC3iVNUShC3lLfnrlMH4rXaOOYQ29lWdKn6BKR1j9yOn1f-AlhTC0k5DA"
     },
     {
       "id": "pos5drow.wnacg",
       "name": "紳士漫畫 (wnacg)",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "contractVersion": "2.1.0",
       "languages": [
         "zh"
@@ -345,8 +419,8 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.wnacg/0.1.1/bridge.js",
-      "sha256": "a69f5eb64c1f9a2022c258008f72ef05cbbce0519159b1ec652c0aab2070208c",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.wnacg/0.1.2/bridge.js",
+      "sha256": "8fcd017c6290f2e4cbe413ce93aaa853550a29451f2070c97171213ef4d76760",
       "iconUrl": "https://www.wnacg.buzz/favicon.ico",
       "assetRateLimit": {
         "maxConcurrent": 4,
@@ -357,7 +431,7 @@
         "wnacg.site",
         "wnacg.com"
       ],
-      "signature": "escnft7sCo7ni8TkEn_G83FLPitWoTjChx1rzqy-C7LrN5pJvNqWcDkbcVGpxu6B_OFREorQGxkPZqBu31dGDQ"
+      "signature": "sYNhrzWWHZVjIprI6KUq6thxPSMnjzgzaBMqOalN725ItRkwoAi0vdIBdMpSp6JReOSYPjXeA-AD8dOvCy6XAw"
     }
   ],
   "publicKey": "_w_wfsGg94fRKmD6kq4mIHQYReFo7qPcZ9IMwhy0L24",
