@@ -21,6 +21,8 @@ const bridges: Array<{ id: string; src: string }> = [
   { id: "nhentai", src: "nhentai.ts" },
   { id: "e-hentai", src: "ehentai.ts" },
   { id: "hitomi", src: "hitomi.ts" },
+  { id: "hentaifox", src: "hentaifox.ts" },
+  { id: "imhentai", src: "imhentai.ts" },
 ];
 
 for (const { id, src } of bridges) {
@@ -39,5 +41,10 @@ for (const { id, src } of bridges) {
     for (const log of result.logs) console.error(log);
     throw new AggregateError(result.logs, `${id} bridge build failed`);
   }
+  // Bun's `//# debugId=` hashes every source it read, tree-shaken ones included, so an unrelated
+  // change would rehash every bundle; drop it so a bundle's bytes change only when its code does.
+  const out = join(ROOT, ".build", id, "dist", "bridge.js");
+  const code = await Bun.file(out).text();
+  await Bun.write(out, code.replace(/\n\/\/# debugId=[0-9A-F]+\s*$/, "\n"));
   console.log(`✓ built → .build/${id}/dist/bridge.js`);
 }

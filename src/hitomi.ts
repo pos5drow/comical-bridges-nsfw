@@ -369,7 +369,7 @@ class HitomiBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hitomi",
     name: "Hitomi.la",
-    version: "0.6.3",
+    version: "0.6.4",
     contractVersion: "2.1.0",
     languages: ["multi"],
     nsfw: true,

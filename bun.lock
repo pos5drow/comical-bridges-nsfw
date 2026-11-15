@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "comical-bridges-nsfw",
+      "dependencies": {
+        "comical-bridge-kit": "github:pos5drow/comical-bridge-kit#8942182056498438887efbe2b16281e3733c1251",
+      },
+    },
+  },
+  "packages": {
+    "comical-bridge-kit": ["comical-bridge-kit@github:pos5drow/comical-bridge-kit#8942182", {}, "pos5drow-comical-bridge-kit-8942182", "sha512-5Y7XFXA3Gvn2g6JIYbbaSNaR3NGttlxvnc04bpW9nl2Fwles1thci9WR5RSmi1Io1Lv7sAqUqSiSEyMWHV9MUQ=="],
+  }
+}

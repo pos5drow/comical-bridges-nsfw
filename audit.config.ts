@@ -20,4 +20,7 @@ export const AUDIT: Record<string, BridgeAuditConfig> = {
   // Structural checks run live; images are Referer-gated and only load through the host's /img-proxy
   // (absent in this harness), so the cover/asset probes can't pass here — tolerated as ⚠.
   hitomi: { searchQuery: "full color", settings: { adult: "true" }, flaky: "images need the host /img-proxy (Referer-gated), unavailable in the audit" },
+  hentaifox: { searchQuery: "full color", settings: { adult: "true" } },
+  // Cloudflare challenges the Node/Bun TLS fingerprint (curl and phone stacks pass).
+  imhentai: { searchQuery: "full color", settings: { adult: "true" }, flaky: "Cloudflare challenges the Bun/Node TLS fingerprint" },
 };
