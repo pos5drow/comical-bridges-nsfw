@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T12:51:34.121Z",
+  "updated": "2026-11-15T22:14:50.162Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -303,6 +303,35 @@
         "kemono.su"
       ],
       "signature": "ynxkT0oWzbFm-GRQvv3j6o1UFficiUXFkPj_DCmFKTUnGC4GW3ZtTdzduOm2N9oKoeQGil48UoGi77FlWXGrDQ"
+    },
+    {
+      "id": "pos5drow.myreadingmanga",
+      "name": "MyReadingManga",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "multi"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.myreadingmanga/0.1.0/bridge.js",
+      "sha256": "815e725b04461a85aedac9b873945ccc2eec87a425c624b0ad3257f4e0c74b32",
+      "iconUrl": "https://myreadingmanga.info/favicon.ico",
+      "cardSubtitles": true,
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "linkHosts": [
+        "myreadingmanga.info"
+      ],
+      "signature": "4dicZKzTb69jgyxJVOvfLATrYfjD2GhxAnUrkcKpiN0nOjbA6_jRgYI9MYOGPARZDN0MwYH_ar4qaLYSnSOyCQ"
     },
     {
       "id": "pos5drow.nhentai",
