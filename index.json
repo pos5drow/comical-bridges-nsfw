@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-15T10:07:02.151Z",
+  "updated": "2026-11-15T10:23:05.394Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -239,6 +239,35 @@
       "signature": "HnfS3j7rqLwTsU2Iu7nfsZ-g9GCRyBi5apfQKelxCGUTrlnCH987q6bREaTge9Yk6wYzzGi6QqO0IJo6DjXYBg"
     },
     {
+      "id": "pos5drow.kemono",
+      "name": "Kemono",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "multi"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.kemono/0.1.0/bridge.js",
+      "sha256": "088e8dc5c3dafed630323b561e4b07a8b7a717313b414ab77aa1442282009634",
+      "iconUrl": "https://kemono.cr/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 100
+      },
+      "linkHosts": [
+        "kemono.cr",
+        "kemono.su"
+      ],
+      "signature": "akflKtbBlVeYhAhbkt-px5_IkXIhnKeB5oIKZs6DEMny3ZsH7xLmPqdIT3JH-6--nkelFtERfSpRWoH4JA4kDQ"
+    },
+    {
       "id": "pos5drow.nhentai",
       "name": "nhentai",
       "version": "0.3.4",
@@ -270,6 +299,35 @@
         "nhentai.net"
       ],
       "signature": "MAV10DfDhGDODxidRZJAgvVSHjpWVqV0OesnLf0M-uf8Q4STW4NZWVNS0_rQV2MZ2MXru7pEWajYVLt1Aaj2Ag"
+    },
+    {
+      "id": "pos5drow.pawchive",
+      "name": "Pawchive",
+      "version": "0.1.0",
+      "contractVersion": "2.1.0",
+      "languages": [
+        "multi"
+      ],
+      "nsfw": true,
+      "capabilities": [
+        "lists",
+        "search",
+        "filters",
+        "sort",
+        "settings"
+      ],
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.pawchive/0.1.0/bridge.js",
+      "sha256": "a95211a2de1c34756ac5694837be9d315eafc1e7b98bfaf159bcbc16a9ca3507",
+      "iconUrl": "https://pawchive.pw/favicon.ico",
+      "assetRateLimit": {
+        "maxConcurrent": 4,
+        "minIntervalMs": 1000
+      },
+      "linkHosts": [
+        "pawchive.pw",
+        "pawchive.st"
+      ],
+      "signature": "Ozts4NR0HIsjKiDukFXZM-Su9Duf-s8EcN-nPH-k_twCnSCe3tZX3E_h2cO_s03W06-RRxpI7lZhuH7A5_1nCQ"
     },
     {
       "id": "pos5drow.wnacg",
