@@ -38,6 +38,7 @@ import {
 } from "@comical/sdk";
 import { md5, parseAbsoluteDate, standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "./core/guarded";
+import { bridgeIcon } from "./core/icon";
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
@@ -72,7 +73,7 @@ class JmComicBridge extends BridgeBase {
     languages: ["zh"],
     nsfw: true,
     capabilities: ["lists", "search", "sort", "settings"],
-    iconUrl: `${MIRRORS[0]}/favicon.ico`,
+    iconUrl: bridgeIcon("jmcomic"),
     rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
     assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
     // No headers: covers and uncut pages load directly; cut pages are routed for their layout.

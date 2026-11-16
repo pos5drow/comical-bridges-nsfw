@@ -33,6 +33,7 @@ import {
 } from "@comical/sdk";
 import { parseAbsoluteDate, parseStatus, standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "./core/guarded";
+import { bridgeIcon } from "./core/icon";
 
 const SITE = "https://hentai2read.com";
 const UA =
@@ -113,7 +114,7 @@ class Hentai2ReadBridge extends BridgeBase {
     languages: ["en"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort"],
-    iconUrl: `${SITE}/favicon.ico`,
+    iconUrl: bridgeIcon("hentai2read"),
     rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
     assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
     linkHosts: ["hentai2read.com"],

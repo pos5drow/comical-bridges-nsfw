@@ -52,6 +52,7 @@ import {
   seriesGoneMessage,
 } from "@comical/sdk";
 import { hintsForCategory } from "./cover-hints";
+import { bridgeIcon } from "./core/icon";
 
 const EH_BASE = "https://e-hentai.org";
 const EX_BASE = "https://exhentai.org";
@@ -566,7 +567,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
     nsfw: true,
     capabilities: ["lists", "search", "filters", "settings", "direct", "favorites"],
     ratings: true,
-    iconUrl: `${EH_BASE}/favicon.ico`,
+    iconUrl: bridgeIcon("e-hentai"),
     // The site bans IPs for page-load bursts well short of what a reader or a download produces at
     // full speed, but publishes no rate, and warns first: "opening pages too fast", which holds the
     // bridge (see `send`) — the ban is for pressing on through it. Requests go one at a time half a

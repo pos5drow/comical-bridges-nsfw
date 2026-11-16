@@ -46,6 +46,7 @@ import {
 import { parseStatus, standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "./core/guarded";
 import { absoluteUrl, hostOf } from "./core/urls";
+import { bridgeIcon } from "./core/icon";
 
 const SITE = "https://myreadingmanga.info";
 const FALLBACK_UA =
@@ -212,7 +213,7 @@ class MyReadingMangaBridge extends BridgeBase {
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort", "settings"],
     cardSubtitles: true,
-    iconUrl: `${SITE}/favicon.ico`,
+    iconUrl: bridgeIcon("myreadingmanga"),
     rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
     assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
     linkHosts: ["myreadingmanga.info"],

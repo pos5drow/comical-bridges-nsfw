@@ -35,6 +35,7 @@ import {
 } from "@comical/sdk";
 import { standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "../core/guarded";
+import { bridgeIcon } from "../core/icon";
 
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
@@ -152,7 +153,7 @@ export class KemonoBridge extends BridgeBase {
       languages: ["multi"],
       nsfw: true,
       capabilities: ["lists", "search", "filters", "sort", "settings"],
-      iconUrl: `${cfg.site}/favicon.ico`,
+      iconUrl: bridgeIcon(cfg.id),
       rateLimit: cfg.rateLimit,
       assetRateLimit: cfg.assetRateLimit,
       linkHosts: cfg.linkHosts,

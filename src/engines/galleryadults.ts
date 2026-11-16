@@ -38,6 +38,7 @@ import {
 } from "@comical/sdk";
 import { parseDate, standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "../core/guarded";
+import { bridgeIcon } from "../core/icon";
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
@@ -93,7 +94,7 @@ export class GalleryAdultsBridge extends BridgeBase {
       languages: ["multi"],
       nsfw: true,
       capabilities: ["lists", "search", "sort", "settings"],
-      iconUrl: `${cfg.site}/favicon.ico`,
+      iconUrl: bridgeIcon(cfg.id),
       rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
       assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
       linkHosts: [this.siteHost],

@@ -47,6 +47,7 @@ import {
   seriesGoneMessage,
 } from "@comical/sdk";
 import { hintsForCategory } from "./cover-hints";
+import { bridgeIcon } from "./core/icon";
 
 const BASE = "https://nhentai.net/api/v2";
 const IMG_FALLBACK = "https://i1.nhentai.net";
@@ -256,7 +257,7 @@ class NhentaiBridge extends BridgeBase<Settings> {
     languages: ["multi"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort", "settings", "favorites", "direct", "exclude-tags", "resolve-tags", "related-series"],
-    iconUrl: "https://nhentai.net/favicon.png",
+    iconUrl: bridgeIcon("nhentai"),
     rateLimit: {
       maxConcurrent: 1,
       minIntervalMs: 700,

@@ -42,6 +42,7 @@ import {
 } from "@comical/sdk";
 import { standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "../core/guarded";
+import { bridgeIcon } from "../core/icon";
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
@@ -180,7 +181,7 @@ export class SchaleBridge extends BridgeBase {
       languages: ["multi"],
       nsfw: true,
       capabilities: ["lists", "search", "filters", "sort", "settings"],
-      iconUrl: `${cfg.site}/favicon.ico`,
+      iconUrl: bridgeIcon(cfg.id),
       rateLimit: { maxConcurrent: 2, minIntervalMs: 350 },
       assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
       linkHosts: cfg.linkHosts,

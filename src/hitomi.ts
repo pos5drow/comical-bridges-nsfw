@@ -71,6 +71,7 @@ import {
   termArea,
 } from "./hitomi/query.ts";
 import { sha256 } from "./hitomi/sha256.ts";
+import { bridgeIcon } from "./core/icon";
 
 const SITE = "https://hitomi.la";
 const D2 = "gold-usergeneratedcontent.net";
@@ -386,7 +387,7 @@ class HitomiBridge extends BridgeBase {
     // Cards carry the artist line under the title.
     cardSubtitles: true,
     // hitomi.la/favicon.ico 404s; the real site icon is a CDN PNG (served without a Referer gate).
-    iconUrl: `${LTN}/favicon-192x192.png`,
+    iconUrl: bridgeIcon("hitomi"),
     // Static CDN — tolerates parallel card fetches; a browse page pulls ~24 galleryblocks.
     rateLimit: { maxConcurrent: 5, minIntervalMs: 120 },
     // Every image needs the Referer; page keys are turned into their current URL at fetch time.
