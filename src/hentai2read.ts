@@ -164,11 +164,22 @@ class Hentai2ReadBridge extends BridgeBase {
     ];
   }
 
+  /**
+   * The browse pages ignore `page` for guests (every page is the first, and their "next" link points
+   * home), so the sorted lists page through an empty search, which serves the same catalogue in the
+   * same order and does page. Trending has no search sort: its first page only, with no next.
+   */
   async getListItems(listId: string, req: ListRequest = {}): Promise<PagedResults<SeriesEntry>> {
-    const path = { latest: "/browse", trending: "/browse/trending", "most-viewed": "/browse/most-viewed", newest: "/browse/newest" }[listId];
-    if (!path) throw new Error(`unknown list: ${listId}`);
     const page = pageFromCursor(req.cursor);
-    const { props } = await this.props<{ books?: Paged }>(page > 1 ? `${path}?page=${page}` : path);
+    if (listId === "trending") {
+      const { props } = await this.props<{ books?: Paged }>("/browse/trending");
+      return { items: this.results(props.books, 1).items };
+    }
+    const sort = { latest: "latest", "most-viewed": "most-viewed", newest: "newest" }[listId];
+    if (!sort) throw new Error(`unknown list: ${listId}`);
+    const q = new URLSearchParams({ q: "", sort });
+    if (page > 1) q.set("page", String(page));
+    const { props } = await this.props<{ books?: Paged }>(`/search?${q}`);
     return this.results(props.books, page);
   }
 

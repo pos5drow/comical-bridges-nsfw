@@ -37,15 +37,21 @@ function host(over?: (url: string) => HttpResponse | undefined) {
 }
 
 describe("lists and search", () => {
-  test("browse: cards from the page data, paging by lastPage", async () => {
+  test("lists: sorted lists page through an empty search (browse ignores page for guests); trending is one page", async () => {
     const { caps, requests } = host();
     const bridge = hentai2read(caps);
     const res = await bridge.getListItems!("latest");
-    await bridge.getListItems!("trending", { cursor: nextPageCursor(1, true)! });
-    expect(requests).toEqual(["https://hentai2read.com/browse", "https://hentai2read.com/browse/trending?page=2"]);
-    expect(res.items[0]).toMatchObject({ id: ID, title: "Aku No Onna Kanbu Seigi Ochi Villian Cattle", subtitle: "Original" });
+    await bridge.getListItems!("most-viewed", { cursor: nextPageCursor(1, true)! });
+    const trending = await bridge.getListItems!("trending");
+    expect(requests).toEqual([
+      "https://hentai2read.com/search?q=&sort=latest",
+      "https://hentai2read.com/search?q=&sort=most-viewed&page=2",
+      "https://hentai2read.com/browse/trending",
+    ]);
+    expect(res.items.length).toBeGreaterThan(0);
     expect(res.items[0]!.thumbnailUrl).toStartWith("https://hentaicdn.com/");
-    expect(res.nextCursor).toBeDefined();
+    expect(trending.items.length).toBeGreaterThan(0);
+    expect(trending.nextCursor).toBeUndefined();
     expect(bridge.info.nsfw).toBe(true);
   });
 
