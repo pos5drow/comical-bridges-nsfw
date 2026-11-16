@@ -8,7 +8,7 @@ import { schaleSite } from "./engines/schale";
 export default schaleSite({
   id: "hdoujin",
   name: "HDoujin",
-  version: "0.1.1",
+  version: "0.1.2",
   site: "https://hdoujin.org",
   apiDomain: "hdoujin.org",
   languages: [
