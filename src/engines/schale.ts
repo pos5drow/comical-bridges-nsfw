@@ -180,6 +180,7 @@ export class SchaleBridge extends BridgeBase {
       languages: ["multi"],
       nsfw: true,
       capabilities: ["lists", "search", "filters", "sort", "settings", "direct"],
+      cardSubtitles: true,
       iconUrl: bridgeIcon(cfg.id),
       rateLimit: { maxConcurrent: 2, minIntervalMs: 350 },
       assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },

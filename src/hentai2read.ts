@@ -119,11 +119,12 @@ class Hentai2ReadBridge extends BridgeBase {
   readonly info: BridgeInfo = {
     id: "pos5drow.hentai2read",
     name: "Hentai2Read",
-    version: "0.1.5",
+    version: "0.1.6",
     contractVersion: "2.1.0",
     languages: ["en"],
     nsfw: true,
     capabilities: ["lists", "search", "filters", "sort"],
+    cardSubtitles: true,
     iconUrl: bridgeIcon("hentai2read"),
     rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
     assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
