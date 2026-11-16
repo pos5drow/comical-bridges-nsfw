@@ -106,13 +106,14 @@ describe("a gallery", () => {
     expect(info.tagGroups!.find((g) => g.label === "Female")!.tags).toEqual(["busty", "cunnilingus", "harem", "milf", "paizuri"]);
   });
 
-  test("one chapter, dated", async () => {
-    expect(await schale(host().caps).getChapters!(ID)).toEqual([{ id: ID, name: "Gallery", publishedAt: 1794725884605 }]);
+  test("read directly: no chapters, pages straight from the gallery", async () => {
+    const bridge = schale(host().caps);
+    expect(bridge.info.capabilities).toContain("direct");
   });
 
   test("pages with the token: the chosen width's set, page thumbnails from the details", async () => {
     const { caps, requests } = host({ token: "tok en" });
-    const pages = await schale(caps).getChapterPages!(ID, ID);
+    const pages = await schale(caps).getSeriesPages!(ID);
     expect(pages.map((p) => p.imageUrl)).toEqual([1, 2, 3].map((n) => `https://nozomi.erocdn.net/data/117223/6ff48f70da20/1280/p${n}.webp`));
     expect(pages[0]!.thumbnail).toEqual({ kind: "image", url: expect.stringMatching(/^https:\/\/nozomi\.erocdn\.net\/thumbnail\/.*\/320\.jpg$/) });
     const gated = requests.filter((r) => r.url.includes("crt="));
@@ -124,14 +125,14 @@ describe("a gallery", () => {
 
   test("no token: a web check of the home page that waits for the site's clearance key", async () => {
     const { caps, requests } = host();
-    const err = await schale(caps).getChapterPages!(ID, ID).catch((e: Error) => e);
+    const err = await schale(caps).getSeriesPages!(ID).catch((e: Error) => e);
     expect(parseChallenge((err as Error).message)).toMatchObject({ url: "https://niyaniya.moe/", storage: ["clearance"], userAgent: expect.stringContaining("Mozilla/5.0") });
     expect(requests).toEqual([]);
   });
 
   test("a refused token is forgotten and asks for a new check", async () => {
     const { caps, secure } = host({ token: "stale", refuse: true });
-    const err = await schale(caps).getChapterPages!(ID, ID).catch((e: Error) => e);
+    const err = await schale(caps).getSeriesPages!(ID).catch((e: Error) => e);
     expect(parseChallenge((err as Error).message)?.storage).toEqual(["clearance"]);
     expect(secure.data.has(TOKEN_KEY)).toBe(false);
   });

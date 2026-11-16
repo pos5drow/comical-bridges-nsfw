@@ -217,6 +217,9 @@ class MyReadingMangaBridge extends BridgeBase {
     rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
     assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
     linkHosts: ["myreadingmanga.info"],
+    // Covers and pages sit behind the site's Cloudflare check too, so they go through the host's
+    // image route, which sends the session the web check earned.
+    images: { hosts: ["myreadingmanga.info"], headers: { Referer: `${SITE}/` } },
   };
 
   private readonly guards = standardGuards(["myreadingmanga.info"]);

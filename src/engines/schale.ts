@@ -3,7 +3,7 @@
  * (`https://api.{apiDomain}`) behind it. A site file is configuration.
  *  - browse and search: `/books?s&sort&cat&page` (`s` takes the site's own terms, such as
  *    `title:"…"` and `language:"^english$"`), and `/books/popular` for this week's most read
- *  - details: `GET /books/detail/{id}/{key}` (a gallery is one chapter)
+ *  - details: `GET /books/detail/{id}/{key}` (a gallery is read directly, without chapters)
  *  - pages: `POST /books/detail/{id}/{key}?crt` lists the image sets by width, then
  *    `GET /books/data/{id}/{key}/{setId}/{setKey}/{width}?crt` lists the pages
  *
@@ -18,7 +18,6 @@
 import {
   BridgeBase,
   type BridgeInfo,
-  type Chapter,
   type Filter,
   type FilterValue,
   type HttpResponse,
@@ -180,7 +179,7 @@ export class SchaleBridge extends BridgeBase {
       contractVersion: "2.1.0",
       languages: ["multi"],
       nsfw: true,
-      capabilities: ["lists", "search", "filters", "sort", "settings"],
+      capabilities: ["lists", "search", "filters", "sort", "settings", "direct"],
       iconUrl: bridgeIcon(cfg.id),
       rateLimit: { maxConcurrent: 2, minIntervalMs: 350 },
       assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
@@ -368,16 +367,9 @@ export class SchaleBridge extends BridgeBase {
     return info;
   }
 
-  override async getChapters(seriesId: string): Promise<Chapter[]> {
-    const d = await this.detail(seriesId);
-    const ch: Chapter = { id: `${d.id}/${d.key}`, name: "Gallery" };
-    const at = d.updated_at ?? d.created_at;
-    if (at) ch.publishedAt = at;
-    return [ch];
-  }
-
-  override async getChapterPages(seriesId: string, chapterId: string): Promise<Page[]> {
-    const g = galleryOf(chapterId) ?? galleryOf(seriesId);
+  /** A gallery is one flat run of pages (capability "direct"), as on the other gallery sites. */
+  override async getSeriesPages(seriesId: string): Promise<Page[]> {
+    const g = galleryOf(seriesId);
     if (!g) throw new Error(seriesGoneMessage("chapter removed from the source"));
     const sets = await this.withClearance<{ data?: DataSets }>("POST", `/books/detail/${g.id}/${g.key}`);
     const pick = pickWidth(sets.data ?? {}, String(this.settings["width"] ?? "1280"));

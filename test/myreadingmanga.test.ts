@@ -66,6 +66,8 @@ const ok = (url: string, body: string): HttpResponse => ({ url, status: 200, sta
 
 test("info parses under the contract", () => {
   const info = myreadingmanga(host().caps).info;
+  // Covers and pages need the Cloudflare session, so they go through the host's image route.
+  expect(info.images).toEqual({ hosts: ["myreadingmanga.info"], headers: { Referer: "https://myreadingmanga.info/" } });
   expect(bridgeInfoSchema.parse(info)).toBeTruthy();
   expect(info).toMatchObject({ id: "pos5drow.myreadingmanga", nsfw: true, languages: ["multi"], linkHosts: ["myreadingmanga.info"] });
 });

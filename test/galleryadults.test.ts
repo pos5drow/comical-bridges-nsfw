@@ -85,21 +85,19 @@ describe("galleries", () => {
     expect(info.tagGroups?.flatMap((g) => g.tags).every((t) => !/\d{3,}/.test(t))).toBe(true);
   });
 
-  test("one chapter, dated from 'Posted'", async () => {
-    const chapters = await hentaifox(host("hentaifox").caps).getChapters!("121667");
-    expect(chapters).toHaveLength(1);
-    expect(chapters[0]).toMatchObject({ id: "121667", name: "Gallery", number: 1 });
-    expect(chapters[0]!.publishedAt).toBeLessThan(Date.now());
+  test("read directly: no chapters, pages straight from the gallery", async () => {
+    const bridge = hentaifox(host("hentaifox").caps);
+    expect(bridge.info.capabilities).toContain("direct");
   });
 
   test("pages on the cover's host (HentaiFox)", async () => {
-    const pages = await hentaifox(host("hentaifox").caps).getChapterPages!("121667", "121667");
+    const pages = await hentaifox(host("hentaifox").caps).getSeriesPages!("121667");
     expect(pages).toHaveLength(22);
     expect(pages[0]).toEqual({ index: 0, imageUrl: "https://i2.hentaifox.com/004/2813091/1.jpg", thumbnail: { kind: "image", url: "https://i2.hentaifox.com/004/2813091/1t.jpg" } });
   });
 
   test("pages on the load_server shard, extension from the JSON (IMHentai)", async () => {
-    const pages = await imhentai(host("imhentai").caps).getChapterPages!("1738938", "1738938");
+    const pages = await imhentai(host("imhentai").caps).getSeriesPages!("1738938");
     expect(pages).toHaveLength(1425);
     expect(pages[0]!.imageUrl).toBe("https://m11.imhentai.xxx/033/iy63wavsu0/1.webp");
     expect(pages[0]!.thumbnail).toEqual({ kind: "image", url: "https://m11.imhentai.xxx/033/iy63wavsu0/1t.jpg" });

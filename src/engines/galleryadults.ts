@@ -17,7 +17,6 @@
 import {
   BridgeBase,
   type BridgeInfo,
-  type Chapter,
   type CheerioRoot,
   type HttpResponse,
   type LinkTarget,
@@ -36,7 +35,7 @@ import {
   pageFromCursor,
   seriesGoneMessage,
 } from "@comical/sdk";
-import { parseDate, standardGuards } from "comical-bridge-kit";
+import { standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "../core/guarded";
 import { bridgeIcon } from "../core/icon";
 
@@ -93,7 +92,7 @@ export class GalleryAdultsBridge extends BridgeBase {
       contractVersion: "2.1.0",
       languages: ["multi"],
       nsfw: true,
-      capabilities: ["lists", "search", "sort", "settings"],
+      capabilities: ["lists", "search", "sort", "settings", "direct"],
       iconUrl: bridgeIcon(cfg.id),
       rateLimit: { maxConcurrent: 2, minIntervalMs: 500 },
       assetRateLimit: { maxConcurrent: 4, minIntervalMs: 100 },
@@ -274,23 +273,8 @@ export class GalleryAdultsBridge extends BridgeBase {
     return info;
   }
 
-  override async getChapters(seriesId: string): Promise<Chapter[]> {
-    const $ = await this.gallery(seriesId);
-    const ch: Chapter = { id: seriesId, name: "Gallery", number: 1 };
-    const posted = $(".pages, .posted")
-      .toArray()
-      .map((el) => $(el).text().replace(/\s+/g, " ").trim())
-      .find((t) => t.startsWith("Posted:"))
-      ?.slice("Posted:".length)
-      .trim();
-    const date = posted ? parseDate(posted) : undefined;
-    if (date !== undefined) ch.publishedAt = date;
-    const groups = this.infoNames($, "Groups");
-    if (groups.length) ch.group = groups.join(", ");
-    return [ch];
-  }
-
-  override async getChapterPages(seriesId: string, _chapterId: string): Promise<Page[]> {
+  /** A gallery is one flat run of pages (capability "direct"), as on the other gallery sites. */
+  override async getSeriesPages(seriesId: string): Promise<Page[]> {
     const $ = await this.gallery(seriesId);
     const script = $("script").toArray().map((s) => $(s).html() ?? "").find((t) => t.includes("parseJSON"));
     const json = script && /\$\.parseJSON\('([^']+)'\)/.exec(script)?.[1];
