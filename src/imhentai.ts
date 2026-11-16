@@ -8,7 +8,7 @@ import { galleryAdults } from "./engines/galleryadults";
 export default galleryAdults({
   id: "imhentai",
   name: "IMHentai",
-  version: "0.1.3",
+  version: "0.1.4",
   site: "https://imhentai.xxx",
   languages: {
     en: ["English", "english"],
