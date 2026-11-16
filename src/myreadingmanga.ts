@@ -45,6 +45,7 @@ import {
 } from "@comical/sdk";
 import { parseStatus, standardGuards } from "comical-bridge-kit";
 import { guardResponse } from "./core/guarded";
+import { absoluteUrl, hostOf } from "./core/urls";
 
 const SITE = "https://myreadingmanga.info";
 const FALLBACK_UA =
@@ -491,12 +492,8 @@ function imageOf(img: { attr(name: string): string | undefined }, base: string):
   const pick = ["data-src", "data-cfsrc", "src"].map((k) => img.attr(k)?.trim()).find((v) => v && IMAGE_EXTENSION.test(v))
     ?? img.attr("data-lazy-src")?.trim();
   if (!pick) return undefined;
-  try {
-    const u = new URL(pick, base);
-    return u.protocol === "https:" || u.protocol === "http:" ? u.href : undefined;
-  } catch {
-    return undefined;
-  }
+  const abs = absoluteUrl(pick, base);
+  return abs && /^https?:\/\//i.test(abs) ? abs : undefined;
 }
 
 /** The post's own cover (its JSON-LD `thumbnailUrl`), if the page carries one. */
@@ -526,7 +523,7 @@ function pageImages($: CheerioRoot, base: string): string[] {
     const link = img.closest("a[href]").attr("href");
     if (link) {
       try {
-        if (!/(^|\.)myreadingmanga\.info$/i.test(new URL(link, base).hostname)) continue;
+        if (!/(^|\.)myreadingmanga\.info$/i.test(hostOf(absoluteUrl(link, base) ?? "") ?? "")) continue;
       } catch {
         continue;
       }
