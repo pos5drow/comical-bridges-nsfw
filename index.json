@@ -1,6 +1,6 @@
 {
   "registryVersion": "1",
-  "updated": "2026-11-16T05:27:45.588Z",
+  "updated": "2026-11-16T05:37:32.018Z",
   "displayName": "NSFW",
   "bridges": [
     {
@@ -63,7 +63,7 @@
     {
       "id": "pos5drow.hdoujin",
       "name": "HDoujin",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -77,9 +77,10 @@
         "settings",
         "direct"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hdoujin/0.1.3/bridge.js",
-      "sha256": "814f27c44ccac3ea5d99c9751b48dd23fbd902562dd6d37e28ce579005c0319f",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hdoujin/0.1.4/bridge.js",
+      "sha256": "d47eedf1d0f316eb0e94d487d11a211b429443e6e57696e75b83a27b7f8409b6",
       "iconUrl": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/icons/hdoujin.png",
+      "cardSubtitles": true,
       "assetRateLimit": {
         "maxConcurrent": 4,
         "minIntervalMs": 100
@@ -96,12 +97,12 @@
       "linkHosts": [
         "hdoujin.org"
       ],
-      "signature": "ULizvY0TmyPREtLNott6jyJikpWQU_o3TUvz1qWyTH-ekIaz81hE-KzZUjIbNu5TF1Jin8-S258QD8zsZeqoBg"
+      "signature": "fSSbFBEa1qk_xgQlTbhDNa9dudB2KqLJ_U-Vs6p3AS96-U2XBPVXHoC-In6BmMPpVfEiiWd597WoQ2xXD0AFAQ"
     },
     {
       "id": "pos5drow.hentai2read",
       "name": "Hentai2Read",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "contractVersion": "2.1.0",
       "languages": [
         "en"
@@ -113,9 +114,10 @@
         "filters",
         "sort"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentai2read/0.1.5/bridge.js",
-      "sha256": "2d94b56df0bbb38568a12fbdc5a56c53da86fc74d963d6f9df593c68edf38980",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.hentai2read/0.1.6/bridge.js",
+      "sha256": "8132c5385658c45e3e54cb9f792e012b363f806492d166752436610c1b83b503",
       "iconUrl": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/icons/hentai2read.png",
+      "cardSubtitles": true,
       "assetRateLimit": {
         "maxConcurrent": 4,
         "minIntervalMs": 100
@@ -123,7 +125,7 @@
       "linkHosts": [
         "hentai2read.com"
       ],
-      "signature": "nUxVcp2VNarwG1y61q78Do9OwtgXCIzsinpIneAsfsVKrK3GXm4snE0IwCJE0H6TYTlS0S2ZXcuTthy3b2wZBQ"
+      "signature": "pDU4kbc61n8Phyudq1IdI-PMOXmeRoJWCMW4dytTkr6zwQFdMs3wj5lYkquadvJAsh3PiPpiGsi3iQNz23l9CQ"
     },
     {
       "id": "pos5drow.hentaifox",
@@ -411,7 +413,7 @@
     {
       "id": "pos5drow.schalenetwork",
       "name": "Schale Network",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "contractVersion": "2.1.0",
       "languages": [
         "multi"
@@ -425,9 +427,10 @@
         "settings",
         "direct"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.schalenetwork/0.1.3/bridge.js",
-      "sha256": "723a230bf1f92c09f5d6475d02642a9d95656aec34f2c9305f3ca4713c303f6b",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.schalenetwork/0.1.4/bridge.js",
+      "sha256": "3f836accb12ddfd2fe2a5dd5fbf82fed812d2d59a9ce8d4a543ae6f018d3f39c",
       "iconUrl": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/icons/schalenetwork.png",
+      "cardSubtitles": true,
       "assetRateLimit": {
         "maxConcurrent": 4,
         "minIntervalMs": 100
@@ -444,12 +447,12 @@
       "linkHosts": [
         "niyaniya.moe"
       ],
-      "signature": "uA4l7De1Ex_Dae1tcpP8NKMc4q49gbGU1E_Ag2knqO-2H7bQQmdpHvxXeaxJ-DvRj7h0D4Lu0y1TlB40dq6tAQ"
+      "signature": "xoKSky6bTWLBU7uJ_sZH_dcak-BXfL7u2mWJH-04TIXGO7ImfLQ650TyLXjI9KRWBCRYuePidW4y8VWurbaoBQ"
     },
     {
       "id": "pos5drow.wnacg",
       "name": "紳士漫畫 (wnacg)",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "contractVersion": "2.1.0",
       "languages": [
         "zh"
@@ -462,9 +465,10 @@
         "sort",
         "settings"
       ],
-      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.wnacg/0.1.3/bridge.js",
-      "sha256": "b00a9f394973ec8c36b2ebf8090522a3abf0377f800a03c13b5111088670faeb",
+      "url": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/bridges/pos5drow.wnacg/0.1.4/bridge.js",
+      "sha256": "21ab79977713ca648f3d70d0069208eab0f09d16abdda839f77ec0cbc62ada88",
       "iconUrl": "https://raw.githubusercontent.com/pos5drow/comical-bridges-nsfw/main/icons/wnacg.png",
+      "cardSubtitles": true,
       "assetRateLimit": {
         "maxConcurrent": 4,
         "minIntervalMs": 100
@@ -474,7 +478,7 @@
         "wnacg.site",
         "wnacg.com"
       ],
-      "signature": "-mUr0STN6qfeDrk5EAiNGiw-Snrs45-um9hr0kPWhoHnF8lrkTCb2TYUcnkXBGIDKiaFC7KDXtjTO_wve2DYDg"
+      "signature": "rDYghvkQpZLpsFwOPYc7cwnm3ezmtVW9ONM6cSKsjcNpW6xAOsEHMjBUon7FJr7k8bkX9NJmrYcvgN3A0UaNAw"
     }
   ],
   "publicKey": "_w_wfsGg94fRKmD6kq4mIHQYReFo7qPcZ9IMwhy0L24",
