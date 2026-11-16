@@ -106,6 +106,16 @@ function seriesPath(urlOrPath: string): string | undefined {
 }
 
 class Hentai2ReadBridge extends BridgeBase {
+  /**
+   * The platform User-Agent when the host gives a browser one (what its web check's web view sends),
+   * else a fixed desktop Chrome one. A challenge answered in a web view with a borrowed User-Agent
+   * never clears, so a bridge behind Cloudflare sends the platform's.
+   */
+  private get ua(): string {
+    const host = this.userAgent;
+    return host && host.startsWith("Mozilla/5.0") ? host : UA;
+  }
+
   readonly info: BridgeInfo = {
     id: "pos5drow.hentai2read",
     name: "Hentai2Read",
@@ -128,7 +138,7 @@ class Hentai2ReadBridge extends BridgeBase {
 
   /** A page's embedded props. */
   private async props<T>(path: string): Promise<{ component: string; props: T }> {
-    const res = await this.request({ url: `${SITE}${path}`, headers: { "User-Agent": UA, Accept: "text/html", Referer: `${SITE}/` } });
+    const res = await this.request({ url: `${SITE}${path}`, headers: { "User-Agent": this.ua, Accept: "text/html", Referer: `${SITE}/` } });
     if (res.status === 404) throw new Error(seriesGoneMessage());
     if (res.status >= 400) throw new Error(`Hentai2Read answered HTTP ${res.status} for ${path}`);
     const json = /<script data-page="app" type="application\/json">([\s\S]*?)<\/script>/.exec(res.body)?.[1];

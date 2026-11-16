@@ -75,6 +75,16 @@ function imgSrc($el: { attr(name: string): string | undefined }): string | undef
 }
 
 export class GalleryAdultsBridge extends BridgeBase {
+  /**
+   * The platform User-Agent when the host gives a browser one (what its web check's web view sends),
+   * else a fixed desktop Chrome one. A challenge answered in a web view with a borrowed User-Agent
+   * never clears, so a bridge behind Cloudflare sends the platform's.
+   */
+  private get ua(): string {
+    const host = this.userAgent;
+    return host && host.startsWith("Mozilla/5.0") ? host : UA;
+  }
+
   readonly info: BridgeInfo;
   private readonly guards: ReturnType<typeof standardGuards>;
   private readonly siteHost: string;
@@ -124,7 +134,7 @@ export class GalleryAdultsBridge extends BridgeBase {
   }
 
   private async page(url: string): Promise<CheerioRoot> {
-    const res = await this.request({ url, headers: { "User-Agent": UA, Accept: "text/html", Referer: `${this.cfg.site}/` } });
+    const res = await this.request({ url, headers: { "User-Agent": this.ua, Accept: "text/html", Referer: `${this.cfg.site}/` } });
     if (res.status === 404) throw new Error(seriesGoneMessage());
     if (res.status >= 400) throw new Error(`${this.cfg.name} answered HTTP ${res.status} for ${url}`);
     return this.parse(res.body);

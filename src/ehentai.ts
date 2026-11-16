@@ -543,6 +543,16 @@ const GALLERY_PAGE_TTL_MS = 30_000;
 const RETRY_WINDOW_MS = 10 * 60_000;
 
 class EHentaiBridge extends BridgeBase<Settings> {
+  /**
+   * The platform User-Agent when the host gives a browser one (what its web check's web view sends),
+   * else a fixed desktop Chrome one. A challenge answered in a web view with a borrowed User-Agent
+   * never clears, so a bridge behind Cloudflare sends the platform's.
+   */
+  private get ua(): string {
+    const host = this.userAgent;
+    return host && host.startsWith("Mozilla/5.0") ? host : UA;
+  }
+
   // Cache for viewer-page hashes: key = `${gid}:${viewerPageIndex}`, value = pageNum → hash.
   // Avoids re-fetching the same viewer page when multiple resolvePage calls land simultaneously.
   private readonly hashCache = new Map<string, Map<number, string>>();
@@ -656,7 +666,7 @@ class EHentaiBridge extends BridgeBase<Settings> {
 
   private headers(forHtml = false): Record<string, string> {
     return {
-      "User-Agent": UA,
+      "User-Agent": this.ua,
       Accept: forHtml
         ? "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         : "application/json, */*",
