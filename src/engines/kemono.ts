@@ -153,6 +153,8 @@ export class KemonoBridge extends BridgeBase {
       languages: ["multi"],
       nsfw: true,
       capabilities: ["lists", "search", "filters", "sort", "settings"],
+      // Each card names the creator's service (Patreon, Fanbox, …) under the name.
+      cardSubtitles: true,
       iconUrl: bridgeIcon(cfg.id),
       rateLimit: cfg.rateLimit,
       assetRateLimit: cfg.assetRateLimit,
