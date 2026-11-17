@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 28 KB (500×665) · sampled 8 · failed 0 · bytes min 11 KB / avg 28 KB / median 27 KB / max 52 KB · dims avg 500×665 (max 500×709) · aspect avg 0.79
+**7/10 capabilities** · cover 26 KB (500×706) · sampled 8 · failed 0 · bytes min 19 KB / avg 26 KB / median 27 KB / max 32 KB · dims avg 500×706 (max 500×710) · aspect avg 0.71
 
 > Cloudflare / IP-gated from datacenters
 
@@ -28,24 +28,23 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 52 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 65 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
+## `e-hentai` — ⚠ (12✓ 2⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 22 KB (242×321) · sampled 8 · failed 0 · bytes min 15 KB / avg 22 KB / median 22 KB / max 34 KB · dims avg 242×321 (max 250×375) · aspect avg 0.80
+**6/6 capabilities** · cover 23 KB (250×294) · sampled 8 · failed 0 · bytes min 12 KB / avg 23 KB / median 25 KB / max 31 KB · dims avg 250×294 (max 250×365) · aspect avg 0.95
 
 > sad-panda / IP + cookie gated from datacenters
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
-| ⚠ | `read.details.author` | core | series details have no author |
 | ⚠ | `read.details.description` | core | series details have no description |
 | ⚠ | `read.details.genres` | core | series details have no genre tag group (kind: "genre") |
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 60 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 62 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -53,12 +52,12 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 371 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 84 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ✓ (13✓ 0⚠ 0✗)
 
-**5/8 capabilities** · cover 59 KB (506×565) · sampled 8 · failed 0 · bytes min 26 KB / avg 59 KB / median 44 KB / max 163 KB · dims avg 506×565 (max 640×640) · aspect avg 0.95
+**5/8 capabilities** · cover 42 KB (533×535) · sampled 8 · failed 0 · bytes min 15 KB / avg 42 KB / median 47 KB / max 51 KB · dims avg 533×535 (max 640×640) · aspect avg 1.09
 
 > images need the host /img-proxy (Referer-gated), unavailable in the audit
 
@@ -75,7 +74,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 64 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 54 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hentaifox` — ✓ (11✓ 0⚠ 0✗ 1⊘)
@@ -135,7 +134,7 @@ shows ⚠ even for a hard failure.
 
 ## `wnacg` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**5/5 capabilities** · cover 33 KB (300×400) · sampled 8 · failed 0 · bytes min 15 KB / avg 33 KB / median 29 KB / max 83 KB · dims avg 300×400 (max 300×400) · aspect avg 0.75
+**5/5 capabilities** · cover 39 KB (300×400) · sampled 8 · failed 0 · bytes min 16 KB / avg 39 KB / median 31 KB / max 83 KB · dims avg 300×400 (max 300×400) · aspect avg 0.75
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
@@ -155,7 +154,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 | ✓ | `read.chapters` | core | got 1 ordered, uniquely-identified chapter(s) |
-| ✓ | `read.pages` | core | got 51 page(s) |
+| ✓ | `read.pages` | core | got 64 page(s) |
 
 ## `jmcomic` — ⚠ (4✓ 4⚠ 0✗)
 
@@ -221,7 +220,7 @@ shows ⚠ even for a hard failure.
 
 ## `hdoujin` — ⚠ (12✓ 1⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 20 KB (277×353) · sampled 8 · failed 0 · bytes min 11 KB / avg 20 KB / median 14 KB / max 48 KB · dims avg 277×353 (max 467×356) · aspect avg 0.79
+**6/6 capabilities** · cover 34 KB (360×351) · sampled 8 · failed 0 · bytes min 21 KB / avg 34 KB / median 28 KB / max 63 KB · dims avg 360×351 (max 667×353) · aspect avg 1.03
 
 > pages need a clearance token from a web check
 
@@ -244,7 +243,7 @@ shows ⚠ even for a hard failure.
 
 ## `schalenetwork` — ⚠ (12✓ 1⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 25 KB (320×452) · sampled 8 · failed 0 · bytes min 22 KB / avg 25 KB / median 25 KB / max 30 KB · dims avg 320×452 (max 320×453) · aspect avg 0.71
+**6/6 capabilities** · cover 26 KB (320×453) · sampled 8 · failed 0 · bytes min 22 KB / avg 26 KB / median 26 KB / max 33 KB · dims avg 320×453 (max 320×460) · aspect avg 0.71
 
 > pages need a clearance token from a web check
 
@@ -284,4 +283,4 @@ shows ⚠ even for a hard failure.
 | ✓ | `sort.options` | sort | getSortOptions returned 3 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
 
-_Updated 2026-11-16 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-17 by the nightly live audit ([`audit.ts`](audit.ts))._
