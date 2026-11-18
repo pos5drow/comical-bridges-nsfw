@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 26 KB (500×706) · sampled 8 · failed 0 · bytes min 19 KB / avg 26 KB / median 27 KB / max 32 KB · dims avg 500×706 (max 500×710) · aspect avg 0.71
+**7/10 capabilities** · cover 31 KB (500×747) · sampled 8 · failed 0 · bytes min 20 KB / avg 31 KB / median 30 KB / max 43 KB · dims avg 500×747 (max 500×909) · aspect avg 0.67
 
 > Cloudflare / IP-gated from datacenters
 
@@ -28,17 +28,18 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 65 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 39 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `e-hentai` — ⚠ (12✓ 2⚠ 0✗ 1⊘)
+## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 23 KB (250×294) · sampled 8 · failed 0 · bytes min 12 KB / avg 23 KB / median 25 KB / max 31 KB · dims avg 250×294 (max 250×365) · aspect avg 0.95
+**6/6 capabilities** · cover 17 KB (250×265) · sampled 8 · failed 0 · bytes min 12 KB / avg 17 KB / median 16 KB / max 25 KB · dims avg 250×265 (max 250×365) · aspect avg 1.05
 
 > sad-panda / IP + cookie gated from datacenters
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
+| ⚠ | `read.details.author` | core | series details have no author |
 | ⚠ | `read.details.description` | core | series details have no description |
 | ⚠ | `read.details.genres` | core | series details have no genre tag group (kind: "genre") |
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
@@ -52,12 +53,12 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 84 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 270 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hitomi` — ✓ (13✓ 0⚠ 0✗)
 
-**5/8 capabilities** · cover 42 KB (533×535) · sampled 8 · failed 0 · bytes min 15 KB / avg 42 KB / median 47 KB / max 51 KB · dims avg 533×535 (max 640×640) · aspect avg 1.09
+**5/8 capabilities** · cover 42 KB (491×593) · sampled 8 · failed 0 · bytes min 35 KB / avg 42 KB / median 43 KB / max 54 KB · dims avg 491×593 (max 640×640) · aspect avg 0.87
 
 > images need the host /img-proxy (Referer-gated), unavailable in the audit
 
@@ -74,7 +75,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 54 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 53 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hentaifox` — ✓ (11✓ 0⚠ 0✗ 1⊘)
@@ -134,7 +135,7 @@ shows ⚠ even for a hard failure.
 
 ## `wnacg` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**5/5 capabilities** · cover 39 KB (300×400) · sampled 8 · failed 0 · bytes min 16 KB / avg 39 KB / median 31 KB / max 83 KB · dims avg 300×400 (max 300×400) · aspect avg 0.75
+**5/5 capabilities** · cover 38 KB (300×400) · sampled 8 · failed 0 · bytes min 16 KB / avg 38 KB / median 31 KB / max 83 KB · dims avg 300×400 (max 300×400) · aspect avg 0.75
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
@@ -144,7 +145,7 @@ shows ⚠ even for a hard failure.
 | ⊘ | `sort.effect` | sort | asc/desc on "create_time_DESC" produced identical order |
 | ✓ | `info.capabilities` | core | declares 5 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 3 list(s) |
-| ✓ | `lists.items` | lists | list "ranking-week" returned 20 item(s) |
+| ✓ | `lists.items` | lists | list "ranking-week" returned 18 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | nextCursor advanced to 20 further item(s) |
 | ✓ | `search.items` | search | search returned 24 item(s) |
@@ -220,7 +221,7 @@ shows ⚠ even for a hard failure.
 
 ## `hdoujin` — ⚠ (12✓ 1⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 34 KB (360×351) · sampled 8 · failed 0 · bytes min 21 KB / avg 34 KB / median 28 KB / max 63 KB · dims avg 360×351 (max 667×353) · aspect avg 1.03
+**6/6 capabilities** · cover 22 KB (250×381) · sampled 8 · failed 0 · bytes min 17 KB / avg 22 KB / median 20 KB / max 35 KB · dims avg 250×381 (max 250×504) · aspect avg 0.67
 
 > pages need a clearance token from a web check
 
@@ -283,4 +284,4 @@ shows ⚠ even for a hard failure.
 | ✓ | `sort.options` | sort | getSortOptions returned 3 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
 
-_Updated 2026-11-17 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-18 by the nightly live audit ([`audit.ts`](audit.ts))._
