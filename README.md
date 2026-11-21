@@ -34,21 +34,21 @@ flaky — these sites IP-gate datacenter (CI runner) addresses even when they wo
 <!-- BRIDGE-STATUS:START -->
 | Bridge | Status | Capabilities | Avg cover | Notes |
 |---|---|---|---|---|
-| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 28 KB (500×620) | Cloudflare / IP-gated from datacenters |
-| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 22 KB (247×302) | sad-panda / IP + cookie gated from datacenters |
-| `hitomi` | ⚠ (13✓ 1⚠ 0✗) | 5/8 | 38 KB (465×613) | images need the host /img-proxy (Referer-gated), unavailable in the audit |
+| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 29 KB (500×620) | Cloudflare / IP-gated from datacenters |
+| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 20 KB (241×354) | sad-panda / IP + cookie gated from datacenters |
+| `hitomi` | ✓ (13✓ 0⚠ 0✗) | 5/8 | 41 KB (514×573) | images need the host /img-proxy (Referer-gated), unavailable in the audit |
 | `hentaifox` | ✓ (11✓ 0⚠ 0✗ 1⊘) | 5/5 | 53 KB (250×350) | — |
 | `imhentai` | ⚠ (4✓ 5⚠ 0✗) | 5/5 | — | Cloudflare challenges the Bun/Node TLS fingerprint |
 | `hentai2read` | ⚠ (4✓ 5⚠ 0✗) | 4/4 | — | Cloudflare challenges the Bun/Node TLS fingerprint |
-| `wnacg` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 5/5 | 38 KB (300×400) | — |
+| `wnacg` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 5/5 | 37 KB (300×400) | — |
 | `jmcomic` | ⚠ (4✓ 4⚠ 0✗) | 4/4 | — | — |
-| `kemono` | ⚠ (15✓ 1⚠ 0✗) | 5/5 | 4 KB (160×160) | — |
+| `kemono` | ⚠ (15✓ 1⚠ 0✗) | 5/5 | — | — |
 | `pawchive` | ⚠ (15✓ 2⚠ 0✗) | 5/5 | 8 KB (229×222) | — |
-| `hdoujin` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 30 KB (388×341) | pages need a clearance token from a web check |
+| `hdoujin` | ⚠ (12✓ 1⚠ 0✗ 1⊘) | 6/6 | 26 KB (277×356) | pages need a clearance token from a web check |
 | `schalenetwork` | ⚠ (12✓ 2⚠ 0✗ 1⊘) | 6/6 | 26 KB (320×453) | pages need a clearance token from a web check |
 | `myreadingmanga` | ⚠ (5✓ 5⚠ 0✗) | 5/5 | — | Cloudflare check needs a browser |
 
-_Updated 2026-11-20 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-21 by the nightly live audit ([`audit.ts`](audit.ts))._
 <!-- BRIDGE-STATUS:END -->
 
 ## Develop
