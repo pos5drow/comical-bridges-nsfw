@@ -34,21 +34,21 @@ flaky — these sites IP-gate datacenter (CI runner) addresses even when they wo
 <!-- BRIDGE-STATUS:START -->
 | Bridge | Status | Capabilities | Avg cover | Notes |
 |---|---|---|---|---|
-| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 31 KB (500×663) | Cloudflare / IP-gated from datacenters |
-| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 19 KB (250×258) | sad-panda / IP + cookie gated from datacenters |
-| `hitomi` | ⚠ (13✓ 1⚠ 0✗) | 5/8 | 36 KB (466×602) | images need the host /img-proxy (Referer-gated), unavailable in the audit |
+| `nhentai` | ⚠ (13✓ 2⚠ 0✗ 2⊘) | 7/10 | 29 KB (500×659) | Cloudflare / IP-gated from datacenters |
+| `e-hentai` | ⚠ (12✓ 3⚠ 0✗ 1⊘) | 6/6 | 24 KB (250×346) | sad-panda / IP + cookie gated from datacenters |
+| `hitomi` | ⚠ (13✓ 1⚠ 0✗) | 5/8 | 52 KB (469×620) | images need the host /img-proxy (Referer-gated), unavailable in the audit |
 | `hentaifox` | ✓ (11✓ 0⚠ 0✗ 1⊘) | 5/5 | 53 KB (250×350) | — |
 | `imhentai` | ⚠ (4✓ 5⚠ 0✗) | 5/5 | — | Cloudflare challenges the Bun/Node TLS fingerprint |
 | `hentai2read` | ⚠ (4✓ 5⚠ 0✗) | 4/4 | — | Cloudflare challenges the Bun/Node TLS fingerprint |
-| `wnacg` | ⚠ (13✓ 1⚠ 0✗ 2⊘) | 5/5 | 26 KB (300×400) | — |
+| `wnacg` | ⚠ (13✓ 1⚠ 0✗ 2⊘) | 5/5 | 27 KB (300×400) | — |
 | `jmcomic` | ⚠ (4✓ 4⚠ 0✗) | 4/4 | — | — |
 | `kemono` | ⚠ (15✓ 1⚠ 0✗) | 5/5 | 4 KB (160×160) | — |
 | `pawchive` | ⚠ (15✓ 2⚠ 0✗) | 5/5 | 8 KB (229×222) | — |
-| `hdoujin` | ⚠ (12✓ 1⚠ 0✗ 1⊘) | 6/6 | 22 KB (281×358) | pages need a clearance token from a web check |
-| `schalenetwork` | ⚠ (12✓ 1⚠ 0✗ 1⊘) | 6/6 | 26 KB (320×455) | pages need a clearance token from a web check |
+| `hdoujin` | ⚠ (12✓ 2⚠ 0✗ 1⊘) | 6/6 | 25 KB (250×355) | pages need a clearance token from a web check |
+| `schalenetwork` | ⚠ (12✓ 1⚠ 0✗ 1⊘) | 6/6 | 23 KB (320×428) | pages need a clearance token from a web check |
 | `myreadingmanga` | ⚠ (5✓ 5⚠ 0✗) | 5/5 | — | Cloudflare check needs a browser |
 
-_Updated 2026-11-24 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-25 by the nightly live audit ([`audit.ts`](audit.ts))._
 <!-- BRIDGE-STATUS:END -->
 
 ## Develop
