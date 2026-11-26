@@ -7,7 +7,7 @@ shows ⚠ even for a hard failure.
 
 ## `nhentai` — ⚠ (13✓ 2⚠ 0✗ 2⊘)
 
-**7/10 capabilities** · cover 29 KB (500×659) · sampled 8 · failed 0 · bytes min 19 KB / avg 29 KB / median 30 KB / max 45 KB · dims avg 500×659 (max 500×706) · aspect avg 0.79
+**7/10 capabilities** · cover 26 KB (500×660) · sampled 8 · failed 0 · bytes min 15 KB / avg 26 KB / median 25 KB / max 45 KB · dims avg 500×660 (max 500×706) · aspect avg 0.79
 
 > Cloudflare / IP-gated from datacenters
 
@@ -28,12 +28,12 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "language" changed results (25→25) |
 | ✓ | `sort.options` | sort | getSortOptions returned 5 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 97 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 54 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `e-hentai` — ⚠ (12✓ 3⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 24 KB (250×346) · sampled 8 · failed 0 · bytes min 15 KB / avg 24 KB / median 25 KB / max 33 KB · dims avg 250×346 (max 250×375) · aspect avg 0.73
+**6/6 capabilities** · cover 21 KB (245×307) · sampled 8 · failed 0 · bytes min 10 KB / avg 21 KB / median 21 KB / max 37 KB · dims avg 245×307 (max 250×375) · aspect avg 0.95
 
 > sad-panda / IP + cookie gated from datacenters
 
@@ -45,7 +45,7 @@ shows ⚠ even for a hard failure.
 | ⊘ | `favorites.read` | favorites | getFavorites needs credentials (none configured) — skipped: getFavorites threw: Error: [login-required:cookies] Sign in to e-hentai to see your favorites. |
 | ✓ | `info.capabilities` | core | declares 6 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 2 list(s) |
-| ✓ | `lists.items` | lists | list "popular" returned 58 item(s) |
+| ✓ | `lists.items` | lists | list "popular" returned 72 item(s) |
 | ✓ | `lists.idStability` | lists | list item ids are stable across calls |
 | ✓ | `lists.cursor` | lists | single page (no nextCursor) |
 | ✓ | `search.items` | search | search returned 25 item(s) |
@@ -53,18 +53,17 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.descriptors` | filters | getFilters returned 3 filter(s) |
 | ✓ | `filters.effect` | filters | filter "category" changed results (25→25) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 3 descriptor(s) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 247 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 271 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
-## `hitomi` — ⚠ (13✓ 1⚠ 0✗)
+## `hitomi` — ✓ (13✓ 0⚠ 0✗)
 
-**5/8 capabilities** · cover 52 KB (469×620) · sampled 8 · failed 0 · bytes min 19 KB / avg 52 KB / median 37 KB / max 178 KB · dims avg 469×620 (max 640×640) · aspect avg 0.77
+**5/8 capabilities** · cover 57 KB (478×620) · sampled 8 · failed 0 · bytes min 36 KB / avg 57 KB / median 41 KB / max 178 KB · dims avg 478×620 (max 640×640) · aspect avg 0.79
 
 > images need the host /img-proxy (Referer-gated), unavailable in the audit
 
 | Result | Check | Capability | Detail |
 |:--:|---|---|---|
-| ⚠ | `read.details.description` | core | series details have no description |
 | ✓ | `info.capabilities` | core | declares 8 capability(ies) |
 | ✓ | `lists.catalog` | lists | getLists returned 12 list(s) |
 | ✓ | `lists.items` | lists | list "home-popular-today" returned 12 item(s) |
@@ -76,7 +75,7 @@ shows ⚠ even for a hard failure.
 | ✓ | `filters.effect` | filters | filter "type" changed results (24→24) |
 | ✓ | `sort.options` | sort | getSortOptions returned 7 option(s) |
 | ✓ | `sort.effect` | sort | sort "latest" reorders results (asc ≠ desc) |
-| ✓ | `direct.pages` | direct | getSeriesPages returned 97 page(s) |
+| ✓ | `direct.pages` | direct | getSeriesPages returned 37 page(s) |
 | ✓ | `read.detailsRoundTrip` | core | details round-trip the sampled id |
 
 ## `hentaifox` — ✓ (11✓ 0⚠ 0✗ 1⊘)
@@ -221,7 +220,7 @@ shows ⚠ even for a hard failure.
 
 ## `hdoujin` — ⚠ (12✓ 2⚠ 0✗ 1⊘)
 
-**6/6 capabilities** · cover 25 KB (250×355) · sampled 8 · failed 0 · bytes min 15 KB / avg 25 KB / median 25 KB / max 36 KB · dims avg 250×355 (max 250×375) · aspect avg 0.71
+**6/6 capabilities** · cover 21 KB (311×342) · sampled 8 · failed 0 · bytes min 10 KB / avg 21 KB / median 20 KB / max 42 KB · dims avg 311×342 (max 518×359) · aspect avg 0.91
 
 > pages need a clearance token from a web check
 
@@ -285,4 +284,4 @@ shows ⚠ even for a hard failure.
 | ✓ | `sort.options` | sort | getSortOptions returned 3 option(s) |
 | ✓ | `settings.descriptors` | settings | getSettings returned 1 descriptor(s) |
 
-_Updated 2026-11-25 by the nightly live audit ([`audit.ts`](audit.ts))._
+_Updated 2026-11-26 by the nightly live audit ([`audit.ts`](audit.ts))._
